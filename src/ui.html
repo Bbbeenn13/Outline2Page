@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Outline2Page</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: var(--figma-color-bg, #ffffff);
+        --bg-secondary: var(--figma-color-bg-secondary, #f7f7f7);
+        --bg-tertiary: var(--figma-color-bg-tertiary, #eeeeee);
+        --border: var(--figma-color-border, #d9d9d9);
+        --border-strong: var(--figma-color-border-strong, #b8b8b8);
+        --text: var(--figma-color-text, #1f1f1f);
+        --text-secondary: var(--figma-color-text-secondary, #686868);
+        --text-tertiary: var(--figma-color-text-tertiary, #8a8a8a);
+        --brand: var(--figma-color-bg-brand, #0d99ff);
+        --brand-text: var(--figma-color-text-onbrand, #ffffff);
+        --danger: var(--figma-color-text-danger, #c4381c);
+        --warn-bg: #7f1d1d;
+        --warn-border: #b91c1c;
+        --warn-text: #fff7f7;
+        --warn-muted: #ffd6d6;
+        --ok: #168044;
+        --radius: 6px;
+        --font: "Inter", "SF Pro Text", "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 360px;
+        min-height: 460px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      button,
+      textarea,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+        min-height: 460px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-weight: 650;
+      }
+
+      h2 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 8px;
+        font-weight: 620;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--brand);
+      }
+
+      main {
+        overflow: auto;
+        padding: 12px;
+      }
+
+      section {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      section:last-child {
+        border-bottom: 0;
+      }
+
+      textarea {
+        display: block;
+        width: 100%;
+        min-height: 150px;
+        resize: vertical;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        outline: none;
+        background: var(--bg-secondary);
+        color: var(--text);
+      }
+
+      textarea:focus,
+      input:focus,
+      select:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 1px var(--brand);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .stat {
+        min-width: 0;
+        padding: 7px 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-secondary);
+      }
+
+      .stat span {
+        display: block;
+        overflow: hidden;
+        color: var(--text-secondary);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stat strong {
+        display: block;
+        overflow: hidden;
+        margin-top: 2px;
+        font-size: 13px;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tree {
+        max-height: 170px;
+        overflow: auto;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-secondary);
+      }
+
+      .tree ul {
+        margin: 0;
+        padding-left: 14px;
+      }
+
+      .tree > ul {
+        padding-left: 0;
+      }
+
+      .tree li {
+        margin: 4px 0;
+        list-style: none;
+      }
+
+      .tree span {
+        display: inline-block;
+        min-width: 72px;
+        margin-right: 6px;
+        color: var(--text-tertiary);
+        font-size: 11px;
+      }
+
+      .selector-row {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+
+      .mapping-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        margin-bottom: 9px;
+      }
+
+      .mapping-row {
+        display: grid;
+        grid-template-columns: 84px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mapping-row span {
+        overflow: hidden;
+        color: var(--text-secondary);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .mapping-input {
+        width: 100%;
+        min-width: 0;
+        min-height: 30px;
+        padding: 5px 8px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        outline: none;
+        background: var(--bg-secondary);
+        color: var(--text);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+      }
+
+      select {
+        width: 100%;
+        min-height: 30px;
+        padding: 4px 28px 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-secondary);
+        color: var(--text);
+      }
+
+      .chip-group {
+        display: grid;
+        grid-template-columns: 60px minmax(0, 1fr);
+        align-items: start;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .property-table {
+        margin-top: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .property-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 56px 84px;
+        gap: 8px;
+        align-items: center;
+        padding: 7px 8px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-secondary);
+      }
+
+      .property-row:last-child {
+        border-bottom: 0;
+      }
+
+      .property-row span,
+      .property-row small {
+        overflow: hidden;
+        color: var(--text-secondary);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .chip-group > span {
+        padding-top: 3px;
+        color: var(--text-secondary);
+      }
+
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        min-width: 0;
+      }
+
+      code {
+        padding: 2px 5px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--bg-secondary);
+        color: var(--text);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .warning,
+      .error,
+      .ok,
+      .empty {
+        padding: 8px 9px;
+        border-radius: var(--radius);
+      }
+
+      .warning {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 8px;
+        margin-bottom: 6px;
+        border: 1px solid var(--warn-border);
+        background: var(--warn-bg);
+        color: var(--warn-text);
+      }
+
+      .warning strong {
+        overflow: hidden;
+        color: var(--warn-text);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .warning span {
+        color: var(--warn-muted);
+      }
+
+      .error {
+        margin-bottom: 10px;
+        border: 1px solid #f0b7a8;
+        background: #fff0ec;
+        color: var(--danger);
+        white-space: pre-wrap;
+      }
+
+      .ok {
+        color: var(--ok);
+        background: #eaf7ef;
+      }
+
+      .empty {
+        color: var(--text-secondary);
+        background: var(--bg-secondary);
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      button {
+        min-height: 30px;
+        padding: 0 11px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        background: var(--bg-secondary);
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      button.primary {
+        min-width: 92px;
+        border-color: var(--brand);
+        background: var(--brand);
+        color: var(--brand-text);
+        font-weight: 620;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .report-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .resize-handle {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        width: 24px;
+        height: 24px;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle::before {
+        content: "";
+        position: absolute;
+        right: 5px;
+        bottom: 5px;
+        width: 13px;
+        height: 13px;
+        opacity: 0.68;
+        background:
+          linear-gradient(135deg, transparent 0 45%, var(--border-strong) 45% 52%, transparent 52%) 7px 7px / 6px 6px no-repeat,
+          linear-gradient(135deg, transparent 0 45%, var(--border-strong) 45% 52%, transparent 52%) 3px 3px / 10px 10px no-repeat,
+          linear-gradient(135deg, transparent 0 45%, var(--border-strong) 45% 52%, transparent 52%) 0 0 / 13px 13px no-repeat;
+        transition: opacity 140ms ease;
+      }
+
+      .resize-handle:hover::before {
+        opacity: 0.95;
+      }
+
+      .resize-handle:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: -5px;
+      }
+
+      @media (max-width: 440px) {
+        .grid,
+        .report-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <h1>Outline2Page</h1>
+        <div class="status"><span class="dot"></span><span id="templateCount">0 个模板</span><span>·</span><span id="parseStatus">等待 Markdown</span></div>
+      </header>
+
+      <main>
+        <div id="error" class="error" hidden></div>
+
+        <section>
+          <h2>Markdown 大纲</h2>
+          <textarea id="markdown" spellcheck="false" placeholder="《产品演示》&#10;# TOC&#10;## 第一章&#10;### 关键问题&#10;##### 现状洞察"></textarea>
+        </section>
+
+        <section>
+          <h2>解析预览</h2>
+          <div id="stats" class="grid"></div>
+        </section>
+
+        <section>
+          <h2>结构树</h2>
+          <div id="tree" class="tree"></div>
+        </section>
+
+        <section>
+          <h2>模板选择</h2>
+          <div id="selectors"></div>
+        </section>
+
+        <section>
+          <h2>字段映射</h2>
+          <div id="properties"></div>
+        </section>
+
+        <section>
+          <h2>当前文件组件属性</h2>
+          <div id="fileProperties"></div>
+        </section>
+
+        <section>
+          <h2>警告</h2>
+          <div id="warnings"></div>
+        </section>
+
+        <section>
+          <h2>生成报告</h2>
+          <div id="report"></div>
+        </section>
+      </main>
+
+      <footer>
+        <button id="scanButton" type="button">扫描模板</button>
+        <button id="generateButton" class="primary" type="button" disabled>生成</button>
+      </footer>
+      <button id="resizeHandle" class="resize-handle" type="button" aria-label="调整面板大小" title="拖拽调整面板大小"></button>
+    </div>
+
+    <script>
+      const uiMinWidth = 380;
+      const uiMinHeight = 460;
+      const uiMaxWidth = 1200;
+      const uiMaxHeight = 1000;
+      const state = {
+        templates: [],
+        templateWarnings: [],
+        document: null,
+        summary: null,
+        report: null,
+        fileComponentProperties: [],
+        filePropertyWarnings: [],
+        error: null,
+        generating: false,
+      };
+      const propertyFields = [
+        { key: "vision", label: "封面主题", defaults: ["COVER_VERSION_TEXT", "PAGE_VERSION_TEXT"] },
+        {
+          key: "chapterTitle",
+          label: "章节标题",
+          defaults: ["PAGE_CHAPTER_TEXT", "PAGE_CHAPTER_TEXT (HUGE)", "CHAPTER_TITLE_TEXT"],
+        },
+        { key: "titleText", label: "标题文字", defaults: ["PAGE_TITLE_TEXT", "TITLE_TEXT"] },
+        { key: "stepText", label: "小节文字", defaults: ["PAGE_STEP_TEXT", "STEP_TEXT"] },
+        { key: "pageNumber", label: "页码", defaults: ["PAGE_PAGE_TEXT", "PAGE_NUMBER_TEXT"] },
+        { key: "tocChapter", label: "目录章节", defaults: ["TOC_CHAPTER_TEXT"] },
+        { key: "tocNumber", label: "目录编号", defaults: ["TOC_NUM_TEXT", "TOC_NUMBER_TEXT"] },
+        { key: "tocPageRange", label: "目录页码范围", defaults: ["TOC_PAGE_RANGE_TEXT"] },
+      ];
+      const elements = {
+        markdown: document.querySelector("#markdown"),
+        scanButton: document.querySelector("#scanButton"),
+        generateButton: document.querySelector("#generateButton"),
+        templateCount: document.querySelector("#templateCount"),
+        parseStatus: document.querySelector("#parseStatus"),
+        stats: document.querySelector("#stats"),
+        tree: document.querySelector("#tree"),
+        selectors: document.querySelector("#selectors"),
+        properties: document.querySelector("#properties"),
+        fileProperties: document.querySelector("#fileProperties"),
+        warnings: document.querySelector("#warnings"),
+        report: document.querySelector("#report"),
+        error: document.querySelector("#error"),
+        resizeHandle: document.querySelector("#resizeHandle"),
+      };
+      let parseTimer = null;
+
+      function post(message) {
+        parent.postMessage({ pluginMessage: message }, "*");
+      }
+
+      function requestParse() {
+        if (parseTimer) window.clearTimeout(parseTimer);
+        parseTimer = window.setTimeout(() => {
+          const markdown = elements.markdown.value.trim();
+          if (!markdown) {
+            state.document = null;
+            state.summary = null;
+            state.report = null;
+            render();
+            return;
+          }
+          post({ type: "PARSE_OUTLINE", markdown });
+        }, 180);
+      }
+
+      function collectTemplateMapping() {
+        const mapping = {};
+        if (!state.summary) return mapping;
+        state.summary.requiredPageKinds.forEach((kind) => {
+          const select = elements.selectors.querySelector(`select[data-kind="${cssEscape(kind)}"]`);
+          if (select && select.value) mapping[kind] = select.value;
+        });
+        return mapping;
+      }
+
+      function collectPropertyMapping() {
+        const mapping = {};
+        propertyFields.forEach((field) => {
+          const input = elements.properties.querySelector(`input[data-field="${cssEscape(field.key)}"]`);
+          const values = parsePropertyTargets((input && input.value) || "");
+          if (values.length) mapping[field.key] = values;
+        });
+        return mapping;
+      }
+
+      function receive(message) {
+        if (message.type === "TEMPLATES_SCANNED") {
+          state.templates = message.templates || [];
+          state.templateWarnings = message.warnings || [];
+          state.error = null;
+          render();
+          return;
+        }
+
+        if (message.type === "FILE_COMPONENT_PROPERTIES_SCANNED") {
+          state.fileComponentProperties = message.properties || [];
+          state.filePropertyWarnings = message.warnings || [];
+          state.error = null;
+          render();
+          return;
+        }
+
+        if (message.type === "OUTLINE_PARSED") {
+          state.document = message.document;
+          state.summary = message.summary;
+          state.error = null;
+          render();
+          return;
+        }
+
+        if (message.type === "GENERATION_DONE") {
+          state.report = message.report;
+          state.generating = false;
+          state.error = null;
+          render();
+          return;
+        }
+
+        if (message.type === "ERROR") {
+          state.error = message.details ? `${message.message}\n${message.details}` : message.message;
+          state.generating = false;
+          render();
+        }
+      }
+
+      function render() {
+        elements.templateCount.textContent = `${state.templates.length} 个模板`;
+        elements.parseStatus.textContent = state.summary ? `${state.summary.estimatedPageCount} 页待生成` : "等待 Markdown";
+        elements.generateButton.disabled = state.generating || !state.summary;
+        elements.generateButton.textContent = state.generating ? "生成中..." : "生成";
+        elements.error.hidden = !state.error;
+        elements.error.textContent = state.error || "";
+
+        renderStats();
+        renderTree();
+        renderSelectors();
+        renderProperties();
+        renderFileProperties();
+        renderWarnings();
+        renderReport();
+      }
+
+      function renderStats() {
+        if (!state.summary) {
+          elements.stats.innerHTML = '<div class="empty">粘贴 Markdown 后显示解析统计</div>';
+          return;
+        }
+        elements.stats.innerHTML = [
+          statItem("主题", state.summary.vision || "未设置"),
+          statItem("章节", String(state.summary.chapterCount)),
+          statItem("标题", String(state.summary.titleCount)),
+          statItem("小节", String(state.summary.stepCount)),
+          statItem("预计页数", String(state.summary.estimatedPageCount)),
+        ].join("");
+      }
+
+      function renderTree() {
+        const doc = state.document;
+        if (!doc || !doc.chapters.length) {
+          elements.tree.innerHTML = '<div class="empty">暂无结构树</div>';
+          return;
+        }
+        elements.tree.innerHTML = doc.chapters
+          .map((chapter) => {
+            const titles = chapter.titles
+              .map((title) => {
+                const steps = title.steps
+                  .map((step) => `<li><span>STEP ${formatNumber(step.index)}</span>${escapeHtml(step.title)}</li>`)
+                  .join("");
+                return `<li><span>TITLE ${formatNumber(title.index)}</span>${escapeHtml(title.title)}${
+                  steps ? `<ul>${steps}</ul>` : ""
+                }</li>`;
+              })
+              .join("");
+            return `<ul><li><span>CHAPTER ${formatNumber(chapter.index)}</span>${escapeHtml(chapter.title)}${
+              titles ? `<ul>${titles}</ul>` : ""
+            }</li></ul>`;
+          })
+          .join("");
+      }
+
+      function renderSelectors() {
+        if (!state.summary || !state.summary.requiredPageKinds.length) {
+          elements.selectors.innerHTML = '<div class="empty">解析后显示模板选择</div>';
+          return;
+        }
+        elements.selectors.innerHTML = state.summary.requiredPageKinds
+          .map((kind) => {
+            const defaultId = chooseDefaultTemplate(kind);
+            const options = state.templates
+              .map((template) => {
+                const selected = template.id === defaultId ? " selected" : "";
+                return `<option value="${escapeAttr(template.id)}"${selected}>${escapeHtml(template.name)}</option>`;
+              })
+              .join("");
+            return `<label class="selector-row">
+              <span>${escapeHtml(kind)}</span>
+              <select data-kind="${escapeAttr(kind)}">
+                ${state.templates.length ? options : '<option value="">没有可用模板</option>'}
+              </select>
+            </label>`;
+          })
+          .join("");
+      }
+
+      function renderProperties() {
+        const properties = uniqueStrings(state.templates.flatMap((template) => template.propertyNames || []));
+        const options = properties;
+        if (!options.length) {
+          elements.properties.innerHTML = '<div class="empty">扫描模板后显示字段映射</div>';
+          return;
+        }
+        elements.properties.innerHTML = [
+          `<div class="mapping-grid">${propertyFields.map((field) => propertyMappingRow(field, options)).join("")}</div>`,
+          groupedChipGroups(options),
+        ].join("");
+      }
+
+      function propertyMappingRow(field, options) {
+        const value = chooseDefaultProperties(field, options).join(" + ");
+        return `<label class="mapping-row">
+          <span>${escapeHtml(field.label)}</span>
+          <input class="mapping-input" type="text" data-field="${escapeAttr(field.key)}" value="${escapeAttr(value)}">
+        </label>`;
+      }
+
+      function parsePropertyTargets(value) {
+        const result = [];
+        const seen = new Set();
+        value.split(/\s*\+\s*|\r?\n|[,，]/).forEach((item) => {
+          const target = item.trim();
+          if (!target || seen.has(target)) return;
+          seen.add(target);
+          result.push(target);
+        });
+        return result;
+      }
+
+      function renderFileProperties() {
+        const button = '<button type="button" data-action="scan-file-properties">扫描文件属性</button>';
+        if (!state.fileComponentProperties.length) {
+          elements.fileProperties.innerHTML = `${button}<div class="empty">点击后扫描当前文件全部组件属性</div>`;
+          return;
+        }
+
+        elements.fileProperties.innerHTML = `${button}<div class="property-table">${state.fileComponentProperties
+          .map(
+            (property) => `<div class="property-row">
+              <code>${escapeHtml(property.name)}</code>
+              <span>${String(property.count)} 处</span>
+              <small>${escapeHtml((property.types || []).join(" / ") || "UNKNOWN")}</small>
+            </div>`,
+          )
+          .join("")}</div>`;
+      }
+
+      function renderWarnings() {
+        const warnings = uniqueBy(
+          [
+            ...state.templateWarnings,
+            ...state.filePropertyWarnings,
+            ...((state.document && state.document.warnings) || []),
+            ...((state.report && state.report.warnings) || []),
+          ],
+          (warning) => `${warning.code}-${warning.line || ""}-${warning.message}`,
+        );
+        if (!warnings.length) {
+          elements.warnings.innerHTML = '<div class="ok">暂无警告</div>';
+          return;
+        }
+        elements.warnings.innerHTML = warnings
+          .map((warning) => {
+            const line = warning.line ? `第 ${warning.line} 行 · ` : "";
+            return `<div class="warning"><strong>${escapeHtml(warning.code)}</strong><span>${line}${escapeHtml(warning.message)}</span></div>`;
+          })
+          .join("");
+      }
+
+      function renderReport() {
+        if (!state.report) {
+          elements.report.innerHTML = '<div class="empty">生成后显示报告</div>';
+          return;
+        }
+        const byKind = ["COVER", "TOC", "CHAPTER", "TITLE", "STEP"]
+          .map((kind) => statItem(kind, String((state.report.createdByKind && state.report.createdByKind[kind]) || 0)))
+          .join("");
+        elements.report.innerHTML = `<div class="report-grid">
+          ${statItem("生成", String(state.report.createdCount))}
+          ${statItem("覆盖 Section", String(state.report.replacedSectionCount))}
+          ${statItem("跳过", String(state.report.skippedCount))}
+          ${statItem("警告", String(state.report.warningCount))}
+          ${statItem("TOC 扩展", String(state.report.tocExpandedCount))}
+          ${byKind}
+        </div>`;
+      }
+
+      function chooseDefaultTemplate(kind) {
+        const exact = state.templates.find((template) => template.kindGuess === kind);
+        return (exact || state.templates[0] || {}).id || "";
+      }
+
+      function chooseDefaultProperties(field, options) {
+        return field.defaults.filter((name) => options.includes(name));
+      }
+
+      function statItem(label, value) {
+        return `<div class="stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+      }
+
+      function chipGroup(label, values) {
+        if (!values.length) return "";
+        return `<div class="chip-group"><span>${escapeHtml(label)}</span><div class="chip-list">${values.map((value) => `<code>${escapeHtml(value)}</code>`).join("")}</div></div>`;
+      }
+
+      function groupedChipGroups(values) {
+        const groups = [
+          { label: "COVER_", values: values.filter((value) => value.startsWith("COVER_")) },
+          { label: "TOC_", values: values.filter((value) => value.startsWith("TOC_")) },
+          { label: "PAGE_", values: values.filter((value) => value.startsWith("PAGE_")) },
+          {
+            label: "其他",
+            values: values.filter((value) => !value.startsWith("COVER_") && !value.startsWith("PAGE_") && !value.startsWith("TOC_")),
+          },
+        ];
+        return groups.map((group) => chipGroup(group.label, group.values)).join("");
+      }
+
+      function uniqueStrings(values) {
+        return [...new Set(values)].sort((a, b) => a.localeCompare(b));
+      }
+
+      function uniqueBy(values, getKey) {
+        const seen = new Set();
+        return values.filter((value) => {
+          const key = getKey(value);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function formatNumber(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+
+      function cssEscape(value) {
+        if (window.CSS && CSS.escape) return CSS.escape(value);
+        return String(value).replace(/["\\]/g, "\\$&");
+      }
+
+      function clampNumber(value, min, max) {
+        return Math.max(min, Math.min(max, Math.round(value)));
+      }
+
+      function installResizeHandle() {
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        let startWidth = uiMinWidth;
+        let startHeight = uiMinHeight;
+
+        const move = (event) => {
+          if (!dragging) return;
+          event.preventDefault();
+          post({
+            type: "RESIZE_UI",
+            width: clampNumber(startWidth + event.clientX - startX, uiMinWidth, uiMaxWidth),
+            height: clampNumber(startHeight + event.clientY - startY, uiMinHeight, uiMaxHeight),
+          });
+        };
+
+        const stop = () => {
+          dragging = false;
+          window.removeEventListener("mousemove", move);
+          window.removeEventListener("mouseup", stop);
+        };
+
+        elements.resizeHandle.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          dragging = true;
+          startX = event.clientX;
+          startY = event.clientY;
+          startWidth = window.innerWidth || uiMinWidth;
+          startHeight = window.innerHeight || uiMinHeight;
+          window.addEventListener("mousemove", move);
+          window.addEventListener("mouseup", stop);
+        });
+      }
+
+      elements.markdown.addEventListener("input", requestParse);
+      elements.scanButton.addEventListener("click", () => post({ type: "SCAN_TEMPLATES" }));
+      installResizeHandle();
+      elements.fileProperties.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target && target.dataset && target.dataset.action === "scan-file-properties") {
+          post({ type: "SCAN_FILE_COMPONENT_PROPERTIES" });
+        }
+      });
+      elements.generateButton.addEventListener("click", () => {
+        if (!state.summary) return;
+        const templateMapping = collectTemplateMapping();
+        const propertyMapping = collectPropertyMapping();
+        state.generating = true;
+        state.report = null;
+        state.error = null;
+        render();
+        post({
+          type: "GENERATE",
+          markdown: elements.markdown.value,
+          templateMapping,
+          propertyMapping,
+        });
+      });
+      window.addEventListener("message", (event) => {
+        const message = event.data && event.data.pluginMessage;
+        if (message && message.type) receive(message);
+      });
+
+      post({ type: "SCAN_TEMPLATES" });
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "outline2page",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Outline2Page Figma plugin built with TypeScript.",
+  "type": "module",
+  "main": "code.js",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "build": "esbuild src/main.ts --bundle --format=iife --target=es2015 --supported:array-spread=false --supported:object-rest-spread=false --outfile=code.js"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "typescript",
+    "markdown"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.117.0",
+    "@eslint/js": "^9.27.0",
+    "esbuild": "^0.25.4",
+    "eslint": "^9.27.0",
+    "globals": "^16.1.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1",
+    "vitest": "^3.1.3"
+  }
+}

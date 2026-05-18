@@ -1,0 +1,11 @@
+{
+  "name": "Outline2Page",
+  "id": "outline2page",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "src/ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page"
+}
