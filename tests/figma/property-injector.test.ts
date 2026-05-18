@@ -254,6 +254,8 @@ describe("PropertyInjector", () => {
 
     expect(result.writtenCount).toBe(0);
     expect(navItem.setPropertiesCalls).toEqual([]);
+    expect(result.missingProperties).toEqual([]);
+    expect(result.warnings).toEqual([]);
   });
 
   it("does not skip ordinary writable instances only because they are inside NAV_group", async () => {

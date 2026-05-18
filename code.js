@@ -560,6 +560,9 @@
     for (const child of getChildren(node)) visit(child);
     return result;
   }
+  function isChildrenNode(node) {
+    return Array.isArray(node.children) && typeof node.appendChild === "function";
+  }
   function isInstanceNode(node) {
     return node.type === "INSTANCE";
   }
@@ -928,6 +931,7 @@
       const targetValues = buildTargetValueMap(values, targets);
       const warnings = [];
       const seenTargets = /* @__PURE__ */ new Set();
+      const ownedTargets = /* @__PURE__ */ new Set();
       let writtenCount = 0;
       for (const node of walkScene(input.node)) {
         try {
@@ -937,12 +941,13 @@
             writtenCount += result.writtenCount;
             result.warnings.forEach((item) => warnings.push(item));
             result.seenTargets.forEach((name) => seenTargets.add(name));
+            result.ownedTargets.forEach((name) => ownedTargets.add(name));
           }
         } catch (e) {
           warnings.push(warning("NODE_ACCESS_FAILED", `\u8282\u70B9\u540D\u79F0\u8BFB\u53D6\u5931\u8D25\uFF0C\u5DF2\u8DF3\u8FC7\u8BE5\u8282\u70B9\uFF1A${readNodeName(node)}`, node, "info"));
         }
       }
-      const missingProperties = buildExpectedTargetNames(values, targets).filter((name) => !seenTargets.has(name));
+      const missingProperties = buildExpectedTargetNames(values, targets).filter((name) => ownedTargets.has(name) && !seenTargets.has(name));
       for (const propertyName of missingProperties) {
         warnings.push({
           code: "PROPERTY_TARGET_MISSING",
@@ -1056,6 +1061,7 @@
     var _a;
     const patch = {};
     const seenTargets = /* @__PURE__ */ new Set();
+    const ownedTargets = /* @__PURE__ */ new Set();
     const warnings = [];
     const properties = readComponentProperties(instance, warnings);
     for (const [rawName, property] of Object.entries(properties)) {
@@ -1063,6 +1069,7 @@
       if (name === "TYPE") continue;
       const target = targetValues[name];
       if (target === void 0) continue;
+      ownedTargets.add(name);
       const value = target.value;
       seenTargets.add(name);
       if (!isWritableValueForProperty(property, value)) {
@@ -1075,7 +1082,7 @@
     if (keys.length > 0) {
       (_a = instance.setProperties) == null ? void 0 : _a.call(instance, patch);
     }
-    return { writtenCount: keys.length, seenTargets, warnings };
+    return { writtenCount: keys.length, seenTargets, ownedTargets, warnings };
   }
 
   // src/figma/navigation-injector.ts
@@ -1574,42 +1581,70 @@
     });
   }
   function ensureTitleTargetCapacity(targets, requiredCount, warnings) {
-    var _a, _b, _c;
     if (requiredCount <= targets.length) return 0;
     if (targets.length === 0) {
       if (requiredCount > 0) warnings.push(warning("TOC_TITLE_SLOT_MISSING", "TOC_NAV_group \u4E2D\u7F3A\u5C11 TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u3002"));
       return 0;
     }
-    const source = targets[targets.length - 1].instance;
-    if (typeof source.clone !== "function") {
-      warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u4E0D\u652F\u6301 clone()\uFF0C\u65E0\u6CD5\u81EA\u52A8\u6269\u5C55\u3002", source));
+    const source = targets[targets.length - 1];
+    const candidates = findTitleCloneCandidates(source.instance);
+    if (candidates.length === 0) {
+      warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u7F3A\u5C11\u53EF\u590D\u5236\u5BB9\u5668\uFF0C\u65E0\u6CD5\u81EA\u52A8\u6269\u5C55\u3002", source.instance));
       return 0;
     }
-    const parent = source.parent;
-    if (!parent || typeof parent.appendChild !== "function") {
-      warnings.push(warning("TOC_TITLE_SLOT_PARENT_MISSING", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u7F3A\u5C11\u53EF\u8FFD\u52A0\u7684\u7236\u7EA7\uFF0C\u65E0\u6CD5\u81EA\u52A8\u6269\u5C55\u3002", source));
-      return 0;
+    for (const candidate of candidates) {
+      const expandedCount = expandTitleTargetsWithCandidate(targets, requiredCount, candidate);
+      if (targets.length >= requiredCount) return expandedCount;
     }
-    const sourceInstances = targets.map((target) => target.instance);
-    const offset = calculateCloneOffset(sourceInstances, { x: ((_a = source.width) != null ? _a : 80) + 24, y: 0 });
+    warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u590D\u5236\u5931\u8D25\uFF0C\u76EE\u5F55\u6807\u9898\u6269\u5C55\u5DF2\u505C\u6B62\u3002", source.instance));
+    return 0;
+  }
+  function findTitleCloneCandidates(instance) {
+    const candidates = [];
+    let current = instance;
+    while (current) {
+      const parent = getParent(current);
+      if (typeof current.clone === "function" && parent && isChildrenNode(parent)) {
+        candidates.push({ node: current, parent });
+      }
+      current = parent;
+    }
+    return candidates;
+  }
+  function getParent(node) {
+    var _a;
+    return (_a = node.parent) != null ? _a : null;
+  }
+  function expandTitleTargetsWithCandidate(targets, requiredCount, candidate) {
+    var _a, _b, _c, _d, _e;
+    const candidateTargets = targets.map((target) => getCloneCandidateNode(target.instance, candidate.node)).filter((node) => node !== null);
+    const offset = calculateCloneOffset(candidateTargets, { x: ((_a = candidate.node.width) != null ? _a : 80) + 24, y: 0 });
     let expandedCount = 0;
-    let lastSlot = source;
+    let lastSlot = candidate.node;
     while (targets.length < requiredCount) {
       try {
-        const clone = source.clone();
-        clone.name = readNodeName(source);
-        clone.x = ((_b = lastSlot.x) != null ? _b : 0) + offset.x;
-        clone.y = ((_c = lastSlot.y) != null ? _c : 0) + offset.y;
-        parent.appendChild(clone);
+        const clone = (_c = (_b = candidate.node).clone) == null ? void 0 : _c.call(_b);
+        if (!clone) throw new Error("clone unavailable");
+        clone.name = readNodeName(candidate.node);
+        clone.x = ((_d = lastSlot.x) != null ? _d : 0) + offset.x;
+        clone.y = ((_e = lastSlot.y) != null ? _e : 0) + offset.y;
+        candidate.parent.appendChild(clone);
         targets.push(...collectTitleTargets(clone));
         lastSlot = clone;
         expandedCount += 1;
       } catch (e) {
-        warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u590D\u5236\u5931\u8D25\uFF0C\u76EE\u5F55\u6807\u9898\u6269\u5C55\u5DF2\u505C\u6B62\u3002", source));
-        break;
+        return expandedCount;
       }
     }
     return expandedCount;
+  }
+  function getCloneCandidateNode(instance, reference) {
+    let current = instance;
+    while (current) {
+      if (current.parent === reference.parent && readNodeName(current) === readNodeName(reference)) return current;
+      current = current.parent;
+    }
+    return null;
   }
   function writeTitleTarget(target, title, visible, warnings) {
     const patch = {};

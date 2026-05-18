@@ -64,6 +64,15 @@
 - 导航专属注入器必须同步支持普通属性注入里已有的同语义尺寸变体，例如 `PAGE_CHAPTER_TEXT (HUGE)`。
 - 回归测试要使用真实 Figma 暴露 key 形态，例如 `NAV_item/PAGE_CHAPTER_TEXT (HUGE)#text`，避免只测简化属性名。
 
+### v5.0 目录标题扩展与导航属性误报
+
+根因：TOC 标题扩展只 clone 内部 `TOC_TITLE_TEXT` 实例，遇到嵌套组件实例 clone 失败时不会回退到标题行容器；普通属性注入器跳过导航容器后仍按全量目标报告缺失，造成导航属性误报。
+
+沉淀：
+- 嵌套 Figma 槽位扩展应沿父级链寻找可复制的最小容器，并测试 clone 抛错后的回退路径。
+- 导航/目录专属属性由专属注入器负责时，普通属性注入器不要把这些跳过的目标计入缺失属性。
+- TOC 回归测试要覆盖 `NAV_item/TOC_TITLE_TEXT#...` 嵌套 key、槽位不足、内部实例不可 clone、父级容器可 clone 的组合。
+
 ## 必测清单
 
 每次相关 fix 至少考虑这些测试：
@@ -72,7 +81,7 @@
 - `property-injector`：默认映射、用户映射、warning 不中断。
 - `naming-service`：frame 命名和旧格式兼容。
 - `navigation-injector`：导航项收集、写入、高亮、frame 名回退、chapter huge 变体。
-- `toc-expander`：嵌套 `TOC_*_TEXT` 属性 key。
+- `toc-expander`：嵌套 `TOC_*_TEXT` 属性 key、标题槽位不足、clone 失败回退。
 - 完整命令：`npm test`、`npm run typecheck`、`npm run lint`、`npm run build`。
 
 ## 长期风险
@@ -82,6 +91,7 @@
 - 如果未来需要自动 clone 导航槽位，必须另开版本设计 clone 策略。
 - 如果未来要持久化字段映射，需要单独设计 `figma.clientStorage`，不要混入当前临时映射逻辑。
 - 如果模板同时有面包屑槽位和列表槽位，仅靠同类槽位数量可能不够，需要更明确的组件命名或结构规则。
+- 如果 TOC 标题槽位和其父级容器都不可 clone，代码只能 warning，模板侧需要提供可复制容器。
 
 ## 更新规则
 

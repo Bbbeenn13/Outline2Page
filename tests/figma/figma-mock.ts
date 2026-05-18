@@ -44,6 +44,7 @@ export type MockNode = FigmaNode &
   setProperties: (properties: Record<string, string | boolean>) => void;
   getRangeAllFontNames: (start: number, end: number) => FontName[];
   findAll?: (callback?: (node: SceneNode) => boolean) => SceneNode[];
+  cloneDisabled?: boolean;
 };
 
 export function resetMockIds(): void {
@@ -81,6 +82,7 @@ export function createMockNode(options: MockOptions, children: MockNode[] = []):
       node.parent = null;
     },
     clone(): MockNode {
+      if (node.cloneDisabled) throw new Error("clone disabled");
       return cloneMockNode(node);
     },
     createInstance(): InstanceNode {

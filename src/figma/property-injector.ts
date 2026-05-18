@@ -76,6 +76,7 @@ export async function injectProperties(input: PropertyInjectorInput): Promise<Pr
   const targetValues = buildTargetValueMap(values, targets);
   const warnings: InjectionWarning[] = [];
   const seenTargets = new Set<string>();
+  const ownedTargets = new Set<string>();
   let writtenCount = 0;
 
   for (const node of walkScene(input.node)) {
@@ -86,13 +87,14 @@ export async function injectProperties(input: PropertyInjectorInput): Promise<Pr
         writtenCount += result.writtenCount;
         result.warnings.forEach((item) => warnings.push(item));
         result.seenTargets.forEach((name) => seenTargets.add(name));
+        result.ownedTargets.forEach((name) => ownedTargets.add(name));
       }
     } catch {
       warnings.push(warning("NODE_ACCESS_FAILED", `节点名称读取失败，已跳过该节点：${readNodeName(node)}`, node, "info"));
     }
   }
 
-  const missingProperties = buildExpectedTargetNames(values, targets).filter((name) => !seenTargets.has(name));
+  const missingProperties = buildExpectedTargetNames(values, targets).filter((name) => ownedTargets.has(name) && !seenTargets.has(name));
   for (const propertyName of missingProperties) {
     warnings.push({
       code: "PROPERTY_TARGET_MISSING",
@@ -223,10 +225,12 @@ function buildExpectedTargetNames(values: PropertyValueMap, targets: Record<stri
 function injectInstanceProperties(instance: InstanceNode, targetValues: TargetValueMap): {
   writtenCount: number;
   seenTargets: Set<string>;
+  ownedTargets: Set<string>;
   warnings: InjectionWarning[];
 } {
   const patch: Record<string, string | boolean> = {};
   const seenTargets = new Set<string>();
+  const ownedTargets = new Set<string>();
   const warnings: InjectionWarning[] = [];
   const properties = readComponentProperties(instance, warnings);
 
@@ -235,6 +239,7 @@ function injectInstanceProperties(instance: InstanceNode, targetValues: TargetVa
     if (name === "TYPE") continue;
     const target = targetValues[name];
     if (target === undefined) continue;
+    ownedTargets.add(name);
     const value = target.value;
     seenTargets.add(name);
     if (!isWritableValueForProperty(property, value)) {
@@ -249,5 +254,5 @@ function injectInstanceProperties(instance: InstanceNode, targetValues: TargetVa
     instance.setProperties?.(patch);
   }
 
-  return { writtenCount: keys.length, seenTargets, warnings };
+  return { writtenCount: keys.length, seenTargets, ownedTargets, warnings };
 }

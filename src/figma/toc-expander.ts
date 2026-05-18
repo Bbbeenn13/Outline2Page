@@ -1,5 +1,6 @@
 import type { AdapterWarning, InstanceNode, OutlineDocument, SceneNode } from "./figma-types";
 import {
+  isChildrenNode,
   isInstanceNode,
   normalizeComponentPropertyName,
   readComponentProperties,
@@ -35,6 +36,11 @@ type TocTitleTarget = {
   instance: InstanceNode;
   textKey: string;
   showKey?: string;
+};
+
+type CloneCandidate = {
+  node: SceneNode;
+  parent: SceneNode & { appendChild: (node: SceneNode) => void };
 };
 
 export function expandAndInjectToc(input: TocExpanderInput): TocExpanderOutput {
@@ -168,39 +174,69 @@ function ensureTitleTargetCapacity(targets: TocTitleTarget[], requiredCount: num
     return 0;
   }
 
-  const source = targets[targets.length - 1].instance;
-  if (typeof source.clone !== "function") {
-    warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT 标题槽位不支持 clone()，无法自动扩展。", source));
+  const source = targets[targets.length - 1];
+  const candidates = findTitleCloneCandidates(source.instance);
+  if (candidates.length === 0) {
+    warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT 标题槽位缺少可复制容器，无法自动扩展。", source.instance));
     return 0;
   }
 
-  const parent = source.parent;
-  if (!parent || typeof parent.appendChild !== "function") {
-    warnings.push(warning("TOC_TITLE_SLOT_PARENT_MISSING", "TOC_TITLE_TEXT 标题槽位缺少可追加的父级，无法自动扩展。", source));
-    return 0;
+  for (const candidate of candidates) {
+    const expandedCount = expandTitleTargetsWithCandidate(targets, requiredCount, candidate);
+    if (targets.length >= requiredCount) return expandedCount;
   }
 
-  const sourceInstances = targets.map((target) => target.instance);
-  const offset = calculateCloneOffset(sourceInstances, { x: (source.width ?? 80) + 24, y: 0 });
+  warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT 标题槽位复制失败，目录标题扩展已停止。", source.instance));
+  return 0;
+}
+
+function findTitleCloneCandidates(instance: InstanceNode): CloneCandidate[] {
+  const candidates: CloneCandidate[] = [];
+  let current: SceneNode | undefined | null = instance;
+  while (current) {
+    const parent = getParent(current);
+    if (typeof current.clone === "function" && parent && isChildrenNode(parent)) {
+      candidates.push({ node: current, parent });
+    }
+    current = parent;
+  }
+  return candidates;
+}
+
+function getParent(node: SceneNode): SceneNode | null {
+  return (node as { parent?: SceneNode | null }).parent ?? null;
+}
+
+function expandTitleTargetsWithCandidate(targets: TocTitleTarget[], requiredCount: number, candidate: CloneCandidate): number {
+  const candidateTargets = targets.map((target) => getCloneCandidateNode(target.instance, candidate.node)).filter((node): node is SceneNode => node !== null);
+  const offset = calculateCloneOffset(candidateTargets, { x: (candidate.node.width ?? 80) + 24, y: 0 });
   let expandedCount = 0;
-  let lastSlot = source;
+  let lastSlot = candidate.node;
   while (targets.length < requiredCount) {
     try {
-      const clone = source.clone() as InstanceNode;
-      clone.name = readNodeName(source);
+      const clone = candidate.node.clone?.();
+      if (!clone) throw new Error("clone unavailable");
+      clone.name = readNodeName(candidate.node);
       clone.x = (lastSlot.x ?? 0) + offset.x;
       clone.y = (lastSlot.y ?? 0) + offset.y;
-      parent.appendChild(clone);
+      candidate.parent.appendChild(clone);
       targets.push(...collectTitleTargets(clone));
       lastSlot = clone;
       expandedCount += 1;
     } catch {
-      warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT 标题槽位复制失败，目录标题扩展已停止。", source));
-      break;
+      return expandedCount;
     }
   }
-
   return expandedCount;
+}
+
+function getCloneCandidateNode(instance: InstanceNode, reference: SceneNode): SceneNode | null {
+  let current: SceneNode | undefined | null = instance;
+  while (current) {
+    if (current.parent === reference.parent && readNodeName(current) === readNodeName(reference)) return current;
+    current = current.parent;
+  }
+  return null;
 }
 
 function writeTitleTarget(target: TocTitleTarget, title: string, visible: boolean, warnings: TocWarning[]): number {

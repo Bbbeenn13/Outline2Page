@@ -95,6 +95,34 @@ function prefixedTocChapterGroup(y: number) {
   });
 }
 
+function nestedPrefixedTocChapterGroup(y: number) {
+  const meta = createMockNode({
+    name: "NAV_item",
+    type: "INSTANCE",
+    componentProperties: {
+      "NAV_item/TOC_NUM_TEXT#num": textProperty(),
+      "NAV_item/TOC_CHAPTER_TEXT#chapter": textProperty(),
+      "NAV_item/TOC_PAGE_RANGE_TEXT#range": textProperty(),
+      "NAV_item/SHOW#show": boolProperty(false),
+    },
+  });
+  const titleRow = createMockNode(
+    { name: "TitleRow", type: "FRAME", x: 0, y: 24, width: 72 },
+    [
+      createMockNode({
+        name: "NAV_item",
+        type: "INSTANCE",
+        componentProperties: {
+          "NAV_item/TOC_TITLE_TEXT#title": textProperty(),
+          "NAV_item/SHOW#show": boolProperty(false),
+        },
+      }),
+    ],
+  );
+  (titleRow.children[0] as MockNode).cloneDisabled = true;
+  return createMockNode({ name: "TOC_NAV_group", type: "FRAME", x: 0, y, height: 40 }, [meta, titleRow]);
+}
+
 describe("TocExpander", () => {
   it("builds one TOC row per chapter and keeps titles inside the chapter group", () => {
     expect(buildTocRows(document, { 1: "02-04", 2: "05-05" })).toEqual([
@@ -219,6 +247,33 @@ describe("TocExpander", () => {
       "NAV_item/TOC_PAGE_RANGE_TEXT#range": "02-04",
       "NAV_item/TOC_TITLE_TEXT#1": "Title One",
       "NAV_item/TOC_TITLE_TEXT#2": "Title Two",
+      "NAV_item/SHOW#show": true,
+    });
+  });
+
+  it("expands nested title row containers when inner TOC_TITLE_TEXT instances cannot be cloned", () => {
+    const first = nestedPrefixedTocChapterGroup(0);
+    const second = nestedPrefixedTocChapterGroup(48);
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first, second]);
+
+    const result = expandAndInjectToc({
+      tocNode,
+      document,
+      chapterRanges: { 1: "02-04", 2: "05-05" },
+    });
+
+    expect(result.warnings).toEqual([]);
+
+    const titleRows = first.children.filter((child) => child.name === "TitleRow") as MockNode[];
+    expect(titleRows).toHaveLength(2);
+    const firstTitle = titleRows[0].children[0] as MockNode;
+    const secondTitle = titleRows[1].children[0] as MockNode;
+    expect(firstTitle.setPropertiesCalls[0]).toMatchObject({
+      "NAV_item/TOC_TITLE_TEXT#title": "Title One",
+      "NAV_item/SHOW#show": true,
+    });
+    expect(secondTitle.setPropertiesCalls[0]).toMatchObject({
+      "NAV_item/TOC_TITLE_TEXT#title": "Title Two",
       "NAV_item/SHOW#show": true,
     });
   });
