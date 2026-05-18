@@ -38,7 +38,9 @@ export function prepareGeneratedSection(input: SectionManagerInput): SectionMana
   for (const node of input.currentPage.children.slice()) {
     if (node.type !== "SECTION") continue;
     if (isTemplateNodeName(readNodeName(node))) continue;
-    if (node.getPluginData?.(GENERATED_PLUGIN_DATA_KEY) !== GENERATED_PLUGIN_DATA_VALUE) continue;
+    if (node.getPluginData?.(GENERATED_PLUGIN_DATA_KEY) !== GENERATED_PLUGIN_DATA_VALUE && readNodeName(node) !== DEFAULT_GENERATED_SECTION_NAME) {
+      continue;
+    }
 
     try {
       node.remove?.();

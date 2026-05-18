@@ -587,7 +587,7 @@
     return (_b = (_a = kind.split(/\s+/)[0]) == null ? void 0 : _a.toUpperCase()) != null ? _b : "";
   }
   function normalizeComponentPropertyName(name) {
-    return name.split("#", 1)[0].trim();
+    return name.replace(/#[^/.]+/g, "").trim();
   }
   function isInjectableTextPropertyName(name) {
     return normalizeComponentPropertyName(name).includes("_TEXT");
@@ -706,7 +706,9 @@
     for (const node of input.currentPage.children.slice()) {
       if (node.type !== "SECTION") continue;
       if (isTemplateNodeName(readNodeName(node))) continue;
-      if (((_a = node.getPluginData) == null ? void 0 : _a.call(node, GENERATED_PLUGIN_DATA_KEY)) !== GENERATED_PLUGIN_DATA_VALUE) continue;
+      if (((_a = node.getPluginData) == null ? void 0 : _a.call(node, GENERATED_PLUGIN_DATA_KEY)) !== GENERATED_PLUGIN_DATA_VALUE && readNodeName(node) !== DEFAULT_GENERATED_SECTION_NAME) {
+        continue;
+      }
       try {
         (_b = node.remove) == null ? void 0 : _b.call(node);
         removedCount += 1;
@@ -1437,15 +1439,14 @@
   }
   function buildNavigationTextPatch(item, label, propertyNames) {
     const targetsByKind = {
-      CHAPTER: ["PAGE_CHAPTER_TEXT", "PAGE_CHAPTER_TEXT (HUGE)", "TOC_CHAPTER_TEXT"],
-      TITLE: ["PAGE_TITLE_TEXT", "TOC_TITLE_TEXT"],
+      CHAPTER: ["PAGE_CHAPTER_TEXT", "PAGE_CHAPTER_TEXT (HUGE)"],
+      TITLE: ["PAGE_TITLE_TEXT"],
       STEP: ["PAGE_STEP_TEXT"]
     };
     const patch = {};
     for (const rawName of propertyNames) {
       const name = normalizeNavigationPropertyName(rawName);
       if (targetsByKind[item.kind].includes(name)) patch[rawName] = label;
-      if (name === "TOC_NUM_TEXT" && item.kind === "CHAPTER") patch[rawName] = formatTwoDigit(item.logicalIndex);
     }
     return patch;
   }
@@ -1544,136 +1545,110 @@
   function injectTocRow(rowNode, row, warnings) {
     var _a;
     let writtenCount = 0;
-    for (const node of walkScene(rowNode)) {
-      if (!isInstanceNode(node)) continue;
-      const properties = readComponentProperties(node, warnings);
-      const patch = {};
-      const hasRowMetadata = hasAnyProperty(node, ["TOC_CHAPTER_TEXT", "TOC_NUM_TEXT", "TOC_PAGE_RANGE_TEXT"]);
-      for (const rawName of Object.keys(properties)) {
-        const name = normalizeTocPropertyName(rawName);
-        if (name === "TOC_CHAPTER_TEXT") patch[rawName] = row.chapterTitle;
-        if (name === "TOC_NUM_TEXT") patch[rawName] = row.numText;
-        if (name === "TOC_PAGE_RANGE_TEXT") patch[rawName] = row.pageRangeText;
-        if (name === "SHOW" && (hasRowMetadata || !hasProperty(node, "TOC_TITLE_TEXT"))) patch[rawName] = true;
-      }
-      writtenCount += writeInstancePatch(node, patch, warnings);
+    const items = collectFlatTocItems(rowNode);
+    for (const item of items) {
+      if (item.role === "TITLE") continue;
+      writtenCount += writeFlatTocItem(item, getTocItemTextValue(item.role, row), true, warnings);
     }
-    const initialTitleTargets = collectTitleTargets(rowNode);
-    ensureTitleTargetCapacity(initialTitleTargets, row.titles.length, warnings);
-    const titleTargets = collectTitleTargets(rowNode);
-    for (let index = 0; index < titleTargets.length; index += 1) {
+    ensureTitleItemCapacity(items, row.titles.length, warnings);
+    const titleItems = collectFlatTocItems(rowNode).filter((item) => item.role === "TITLE");
+    for (let index = 0; index < titleItems.length; index += 1) {
       const title = (_a = row.titles[index]) != null ? _a : "";
-      writtenCount += writeTitleTarget(titleTargets[index], title, index < row.titles.length, warnings);
+      writtenCount += writeFlatTocItem(titleItems[index], title, index < row.titles.length, warnings);
     }
     return writtenCount;
   }
-  function collectTitleTargets(rowNode) {
-    const instances = sortByVisualOrder(walkScene(rowNode).filter((node) => isInstanceNode(node)));
-    const dedicatedInstances = instances.filter(
-      (node) => hasProperty(node, "TOC_TITLE_TEXT") && !hasAnyProperty(node, ["TOC_CHAPTER_TEXT", "TOC_NUM_TEXT", "TOC_PAGE_RANGE_TEXT"])
-    );
-    const targetInstances = dedicatedInstances.length > 0 ? dedicatedInstances : instances.filter((node) => hasProperty(node, "TOC_TITLE_TEXT"));
-    return targetInstances.flatMap((instance) => {
-      const properties = readComponentProperties(instance);
-      const hasRowMetadata = hasAnyProperty(instance, ["TOC_CHAPTER_TEXT", "TOC_NUM_TEXT", "TOC_PAGE_RANGE_TEXT"]);
-      const showKey = hasRowMetadata ? void 0 : Object.keys(properties).find((name) => normalizeTocPropertyName(name) === "SHOW");
-      return Object.keys(properties).filter((name) => normalizeTocPropertyName(name) === "TOC_TITLE_TEXT").map((textKey) => ({ instance, textKey, showKey }));
-    });
+  function collectFlatTocItems(rowNode) {
+    const result = [];
+    const instances = sortByVisualOrder(walkScene(rowNode, false).filter((node) => isInstanceNode(node)));
+    for (const node of instances) {
+      if (!isInstanceNode(node)) continue;
+      const properties = readComponentProperties(node);
+      const propertyNames = Object.keys(properties);
+      const role = readTocRoleFromProperties(properties, propertyNames);
+      if (!role) continue;
+      result.push({
+        instance: node,
+        role,
+        textKeys: propertyNames.filter((name) => isTocTextPropertyForRole(role, name)),
+        showKey: propertyNames.find((name) => normalizeTocPropertyName(name) === "SHOW")
+      });
+    }
+    return result;
   }
-  function ensureTitleTargetCapacity(targets, requiredCount, warnings) {
-    if (requiredCount <= targets.length) return 0;
-    if (targets.length === 0) {
+  function ensureTitleItemCapacity(items, requiredCount, warnings) {
+    var _a, _b, _c;
+    const titleItems = items.filter((item) => item.role === "TITLE");
+    if (requiredCount <= titleItems.length) return 0;
+    if (titleItems.length === 0) {
       if (requiredCount > 0) warnings.push(warning("TOC_TITLE_SLOT_MISSING", "TOC_NAV_group \u4E2D\u7F3A\u5C11 TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u3002"));
       return 0;
     }
-    const source = targets[targets.length - 1];
-    const candidates = findTitleCloneCandidates(source.instance);
-    if (candidates.length === 0) {
-      warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u7F3A\u5C11\u53EF\u590D\u5236\u5BB9\u5668\uFF0C\u65E0\u6CD5\u81EA\u52A8\u6269\u5C55\u3002", source.instance));
+    const source = titleItems[titleItems.length - 1].instance;
+    const parent = getParent(source);
+    if (typeof source.clone !== "function" || !parent || !isChildrenNode(parent)) {
+      warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u7F3A\u5C11\u53EF\u590D\u5236\u5BB9\u5668\uFF0C\u65E0\u6CD5\u81EA\u52A8\u6269\u5C55\u3002", source));
       return 0;
     }
-    for (const candidate of candidates) {
-      const expandedCount = expandTitleTargetsWithCandidate(targets, requiredCount, candidate);
-      if (targets.length >= requiredCount) return expandedCount;
-    }
-    warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u590D\u5236\u5931\u8D25\uFF0C\u76EE\u5F55\u6807\u9898\u6269\u5C55\u5DF2\u505C\u6B62\u3002", source.instance));
-    return 0;
-  }
-  function findTitleCloneCandidates(instance) {
-    const candidates = [];
-    let current = instance;
-    while (current) {
-      const parent = getParent(current);
-      if (typeof current.clone === "function" && parent && isChildrenNode(parent)) {
-        candidates.push({ node: current, parent });
+    const offset = calculateCloneOffset(titleItems.map((item) => item.instance), { x: 0, y: ((_a = source.height) != null ? _a : 20) + 4 });
+    let expandedCount = 0;
+    let lastSlot = source;
+    while (titleItems.length + expandedCount < requiredCount) {
+      try {
+        const clone = source.clone();
+        clone.name = readNodeName(source);
+        clone.x = ((_b = lastSlot.x) != null ? _b : 0) + offset.x;
+        clone.y = ((_c = lastSlot.y) != null ? _c : 0) + offset.y;
+        parent.appendChild(clone);
+        lastSlot = clone;
+        expandedCount += 1;
+      } catch (e) {
+        warnings.push(warning("TOC_TITLE_SLOT_CLONE_FAILED", "TOC_TITLE_TEXT \u6807\u9898\u69FD\u4F4D\u590D\u5236\u5931\u8D25\uFF0C\u76EE\u5F55\u6807\u9898\u6269\u5C55\u5DF2\u505C\u6B62\u3002", source));
+        break;
       }
-      current = parent;
     }
-    return candidates;
+    return expandedCount;
   }
   function getParent(node) {
     var _a;
     return (_a = node.parent) != null ? _a : null;
   }
-  function expandTitleTargetsWithCandidate(targets, requiredCount, candidate) {
-    var _a, _b, _c, _d, _e;
-    const candidateTargets = targets.map((target) => getCloneCandidateNode(target.instance, candidate.node)).filter((node) => node !== null);
-    const offset = calculateCloneOffset(candidateTargets, { x: ((_a = candidate.node.width) != null ? _a : 80) + 24, y: 0 });
-    let expandedCount = 0;
-    let lastSlot = candidate.node;
-    while (targets.length < requiredCount) {
-      try {
-        const clone = (_c = (_b = candidate.node).clone) == null ? void 0 : _c.call(_b);
-        if (!clone) throw new Error("clone unavailable");
-        clone.name = readNodeName(candidate.node);
-        clone.x = ((_d = lastSlot.x) != null ? _d : 0) + offset.x;
-        clone.y = ((_e = lastSlot.y) != null ? _e : 0) + offset.y;
-        candidate.parent.appendChild(clone);
-        targets.push(...collectTitleTargets(clone));
-        lastSlot = clone;
-        expandedCount += 1;
-      } catch (e) {
-        return expandedCount;
-      }
-    }
-    return expandedCount;
-  }
-  function getCloneCandidateNode(instance, reference) {
-    let current = instance;
-    while (current) {
-      if (current.parent === reference.parent && readNodeName(current) === readNodeName(reference)) return current;
-      current = current.parent;
-    }
-    return null;
-  }
-  function writeTitleTarget(target, title, visible, warnings) {
-    const patch = {};
-    patch[target.textKey] = title;
-    if (target.showKey) patch[target.showKey] = visible;
-    return writeInstancePatch(target.instance, patch, warnings);
-  }
   function hideTocGroup(rowNode, warnings) {
     let writtenCount = 0;
-    for (const node of walkScene(rowNode)) {
-      if (!isInstanceNode(node)) continue;
-      const properties = readComponentProperties(node, warnings);
-      const patch = {};
-      for (const rawName of Object.keys(properties)) {
-        const name = normalizeTocPropertyName(rawName);
-        if (name === "SHOW") patch[rawName] = false;
-        if (name === "TOC_CHAPTER_TEXT" || name === "TOC_TITLE_TEXT" || name === "TOC_NUM_TEXT" || name === "TOC_PAGE_RANGE_TEXT") {
-          patch[rawName] = "";
-        }
-      }
-      writtenCount += writeInstancePatch(node, patch, warnings);
+    for (const item of collectFlatTocItems(rowNode)) {
+      writtenCount += writeFlatTocItem(item, "", false, warnings);
     }
     return writtenCount;
   }
-  function hasProperty(instance, wantedName) {
-    return Object.keys(readComponentProperties(instance)).some((name) => normalizeTocPropertyName(name) === wantedName);
+  function getTocItemTextValue(role, row) {
+    if (role === "NUM") return row.numText;
+    if (role === "CHAPTER") return row.chapterTitle;
+    if (role === "PAGE") return row.pageRangeText;
+    return "";
   }
-  function hasAnyProperty(instance, wantedNames) {
-    return wantedNames.some((name) => hasProperty(instance, name));
+  function readTocRoleFromProperties(properties, propertyNames) {
+    const typeKey = propertyNames.find((name) => normalizeTocPropertyName(name) === "TYPE");
+    const typeValue = typeKey ? properties[typeKey].value : void 0;
+    if (typeof typeValue === "string") {
+      const role = parseTocRoleValue(typeValue);
+      if (role) return role;
+    }
+    return null;
+  }
+  function parseTocRoleValue(value) {
+    const normalized = value.trim().toUpperCase();
+    if (normalized === "TOC_NUM") return "NUM";
+    if (normalized === "TOC_CHAPTER") return "CHAPTER";
+    if (normalized === "TOC_PAGE_RANGE" || normalized === "TOC_PAGE") return "PAGE";
+    if (normalized === "TOC_TITLE") return "TITLE";
+    return null;
+  }
+  function isTocTextPropertyForRole(role, rawName) {
+    const name = normalizeTocPropertyName(rawName);
+    if (role === "NUM") return name === "TOC_NUM_TEXT";
+    if (role === "CHAPTER") return name === "TOC_CHAPTER_TEXT";
+    if (role === "PAGE") return name === "TOC_PAGE_RANGE_TEXT" || name === "TOC_PAGE_TEXT";
+    return name === "TOC_TITLE_TEXT";
   }
   function normalizeTocPropertyName(name) {
     var _a, _b;
@@ -1692,16 +1667,48 @@
     }
     return fallback;
   }
-  function writeInstancePatch(instance, patch, warnings) {
-    var _a;
-    if (Object.keys(patch).length === 0) return 0;
-    try {
-      (_a = instance.setProperties) == null ? void 0 : _a.call(instance, patch);
-      return Object.keys(patch).length;
-    } catch (e) {
-      warnings.push(warning("TOC_ROW_WRITE_FAILED", `TOC \u884C\u5199\u5165\u5931\u8D25\uFF1A${readNodeName(instance)}`, instance));
-      return 0;
+  function writeFlatTocItem(item, text, visible, warnings) {
+    let writtenCount = 0;
+    const textPatch = Object.fromEntries(item.textKeys.map((key) => [key, text]));
+    if (item.textKeys.length === 0 && visible) {
+      warnings.push(warning("TOC_TEXT_PROPERTY_MISSING", `TOC item \u7F3A\u5C11\u53EF\u5199\u6587\u672C\u5C5E\u6027\uFF1A${readNodeName(item.instance)}`, item.instance));
     }
+    writtenCount += writeInstancePatch(item.instance, textPatch, warnings);
+    if (item.showKey) writtenCount += writeInstancePatch(item.instance, { [item.showKey]: visible }, warnings);
+    return writtenCount;
+  }
+  function writeInstancePatch(instance, patch, warnings) {
+    var _a, _b;
+    const entries = Object.entries(patch);
+    if (entries.length === 0) return 0;
+    const cleanPatch = Object.fromEntries(entries);
+    try {
+      (_a = instance.setProperties) == null ? void 0 : _a.call(instance, cleanPatch);
+      return entries.length;
+    } catch (e) {
+      if (entries.length === 1) {
+        const [propertyName, value] = entries[0];
+        warnings.push(createTocPropertyWriteWarning(instance, propertyName, value));
+        return 0;
+      }
+      let writtenCount = 0;
+      for (const [propertyName, value] of entries) {
+        try {
+          (_b = instance.setProperties) == null ? void 0 : _b.call(instance, { [propertyName]: value });
+          writtenCount += 1;
+        } catch (e2) {
+          warnings.push(createTocPropertyWriteWarning(instance, propertyName, value));
+        }
+      }
+      return writtenCount;
+    }
+  }
+  function createTocPropertyWriteWarning(instance, propertyName, value) {
+    return warning(
+      "TOC_PROPERTY_WRITE_FAILED",
+      `TOC \u5C5E\u6027\u5199\u5165\u5931\u8D25\uFF1A${normalizeComponentPropertyName(propertyName)}=${String(value)}\u3002\u8BF7\u68C0\u67E5\u7EC4\u4EF6\u5C5E\u6027\u7C7B\u578B\u6216 variant \u53D6\u503C\u3002`,
+      instance
+    );
   }
 
   // src/main.ts

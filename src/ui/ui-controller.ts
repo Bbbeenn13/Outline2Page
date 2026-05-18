@@ -116,6 +116,7 @@ type ControllerState = {
   document: OutlineDocument | null;
   summary: OutlineSummary | null;
   report: GenerationReport | null;
+  propertyMappingDrafts: Record<string, string>;
   fileComponentProperties: ComponentPropertySummary[];
   filePropertyWarnings: AppWarning[];
   error: string | null;
@@ -166,6 +167,7 @@ export function createOutline2PageUiController(options: ControllerOptions) {
     document: null,
     summary: null,
     report: null,
+    propertyMappingDrafts: {},
     fileComponentProperties: [],
     filePropertyWarnings: [],
     error: null,
@@ -194,6 +196,11 @@ export function createOutline2PageUiController(options: ControllerOptions) {
   elements.markdown.addEventListener("input", requestParse);
   elements.scanButton.addEventListener("click", () => send({ type: "SCAN_TEMPLATES" }));
   installResizeHandle(options.root, elements.resizeHandle, send);
+  elements.properties.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!isPropertyMappingInput(target)) return;
+    state.propertyMappingDrafts[target.dataset.field] = target.value;
+  });
   elements.fileProperties.addEventListener("click", (event) => {
     const target = event.target;
     if (hasDatasetAction(target, "scan-file-properties")) {
@@ -202,6 +209,7 @@ export function createOutline2PageUiController(options: ControllerOptions) {
   });
   elements.generateButton.addEventListener("click", () => {
     if (!state.summary) return;
+    syncPropertyMappingDrafts(elements.properties, state.propertyMappingDrafts);
     const templateMapping = collectTemplateMapping(elements.selectors, state.summary.requiredPageKinds);
     const propertyMapping = collectPropertyMapping(elements.properties);
     state.generating = true;
@@ -362,7 +370,7 @@ function render(state: ControllerState, elements: Elements): void {
   renderStats(elements.stats, state.summary);
   renderTree(elements.tree, state.document);
   renderTemplateSelectors(elements.selectors, state.summary, state.templates);
-  renderProperties(elements.properties, state.templates);
+  renderProperties(elements.properties, state.templates, state.propertyMappingDrafts);
   renderFileProperties(elements.fileProperties, state.fileComponentProperties);
   renderWarnings(elements.warnings, [
     ...state.templateWarnings,
@@ -457,7 +465,7 @@ function renderTemplateSelectors(root: HTMLElement, summary: OutlineSummary | nu
     .join("");
 }
 
-function renderProperties(root: HTMLElement, templates: TemplateInfo[]): void {
+function renderProperties(root: HTMLElement, templates: TemplateInfo[], drafts: Record<string, string>): void {
   const propertyNames = uniqueStrings(templates.flatMap((template) => template.propertyNames));
   const options = propertyNames;
 
@@ -467,13 +475,13 @@ function renderProperties(root: HTMLElement, templates: TemplateInfo[]): void {
   }
 
   root.innerHTML = [
-    `<div class="mapping-grid">${PROPERTY_FIELDS.map((field) => propertyMappingRow(field, options)).join("")}</div>`,
+    `<div class="mapping-grid">${PROPERTY_FIELDS.map((field) => propertyMappingRow(field, options, drafts)).join("")}</div>`,
     groupedChipGroups(options),
   ].join("");
 }
 
-function propertyMappingRow(field: PropertyField, options: string[]): string {
-  const value = chooseDefaultProperties(field, options).join(" + ");
+function propertyMappingRow(field: PropertyField, options: string[], drafts: Record<string, string>): string {
+  const value = Object.prototype.hasOwnProperty.call(drafts, field.key) ? (drafts[field.key] ?? "") : chooseDefaultProperties(field, options).join(" + ");
 
   return `<label class="mapping-row">
     <span>${escapeHtml(field.label)}</span>
@@ -491,6 +499,13 @@ function parsePropertyTargets(value: string): string[] {
     result.push(target);
   }
   return result;
+}
+
+function syncPropertyMappingDrafts(root: HTMLElement, drafts: Record<string, string>): void {
+  PROPERTY_FIELDS.forEach((field) => {
+    const input = root.querySelector<HTMLInputElement>(`input[data-field="${cssEscape(field.key)}"]`);
+    if (input) drafts[field.key] = input.value;
+  });
 }
 
 function renderWarnings(root: HTMLElement, warnings: AppWarning[]): void {
@@ -600,4 +615,10 @@ function hasDatasetAction(target: EventTarget | null, action: string): boolean {
   if (!target || typeof target !== "object" || !("dataset" in target)) return false;
   const dataset = (target as { dataset?: { action?: string } }).dataset;
   return dataset?.action === action;
+}
+
+function isPropertyMappingInput(target: EventTarget | null): target is HTMLInputElement & { dataset: { field: string } } {
+  if (!target || typeof target !== "object" || !("dataset" in target) || !("value" in target)) return false;
+  const dataset = (target as { dataset?: { field?: string } }).dataset;
+  return typeof dataset?.field === "string" && dataset.field.length > 0;
 }

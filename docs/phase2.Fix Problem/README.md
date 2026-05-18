@@ -30,7 +30,22 @@ docs/phase2.Fix Problem/
 docs/phase2.Fix Problem/RETRO.md
 ```
 
-它是所有版本 `debrief.md` 的高密度沉淀版。后续 agent 进入 fix 前应优先阅读它，以快速了解需要规避的问题、需要强调的原则和必须保留的测试检查。
+同时维护当前指南文件：
+
+```txt
+docs/phase2.Fix Problem/FIX_GUIDE.md
+```
+
+`FIX_GUIDE.md` 是当前开发、决策、修复、测试的行动地图。后续 agent 进入 fix 前优先阅读它，再读取当前最高版本目录的 `progress.md` 与 `debrief.md`。
+
+`RETRO.md` 是历史索引，用于追溯每轮 fix 的关键根因和状态。它不再承担当前操作手册职责，也不要求每轮 fix 通读全文。
+
+默认读取顺序：
+
+1. `AGENTS.md`
+2. `docs/phase2.Fix Problem/FIX_GUIDE.md`
+3. 当前最高版本目录的 `progress.md` 与 `debrief.md`
+4. 按需读取 `RETRO.md` 或更旧版本目录
 
 ### RETRO.md 更新规范
 
@@ -42,13 +57,30 @@ Get-Content -LiteralPath 'docs\phase2.Fix Problem\RETRO.md' -Encoding utf8
 
 如果终端默认输出出现乱码，不要据此判断文件结构不可匹配；应改用显式 UTF-8 读取后再定位章节。
 
-新增版本沉淀必须合并到现有标准结构中：
+新增版本历史索引必须合并到现有标准结构中：
 
 - 新版本条目写入 `## 版本教训` 下，使用 `### vX.0 问题名`。
 - 条目内部沿用现有格式，至少包含 `根因` 与 `沉淀`。
-- 可复用必测项同步合并到 `## 必测清单`。
-- 长期风险同步合并到 `## 长期风险`。
+- 每个版本条目优先控制在 3-5 行，用于索引而不是复述完整过程。
+- 可复用且当前仍有效的必测项、长期风险、决策规则应写入 `FIX_GUIDE.md`，而不是继续膨胀 `RETRO.md`。
 - 禁止因为补丁上下文匹配失败，就把新版本内容临时追加到文件尾部。
+
+复盘沉淀必须避免旧判断污染后续 agent：
+
+- 先判断每条结论的当前有效性：仍有效、仅历史有效、已被后续版本推翻、只对特定模块有效。
+- `FIX_GUIDE.md` 只放当前仍会指导实现和验证的内容。
+- 已废弃的实现路径、模板结构、兼容策略或测试要求，不得继续放进 `FIX_GUIDE.md`。
+- 如果旧版本总结仍有追溯价值但不再推荐执行，不删除整行；只有在刚好读到且确认会误导当前决策时，才用 Markdown 删除线 `~~...~~` 标注旧结论，并补一句当前版本修正，例如“v10 修正：不是优先，而是唯一支持路径”。
+- 如果旧结论只对某个模块有效，必须写清模块边界；不要把局部经验写成全局规则。例如 `PAGE_NAV_group` 的 `HIGHLIGHT` 规则不能外推到当前 `TOC_NAV_group`。
+- 当用户明确模板或业务规则已经升级，`FIX_GUIDE.md` 应同步移除旧兼容路径；`RETRO.md` 只需在本轮索引中说明“不再作为支持目标”“不要回加兼容”。
+
+### FIX_GUIDE.md 更新规范
+
+- 每轮 fix 收尾时判断是否需要更新 `FIX_GUIDE.md`。
+- 只有当前仍有效、会指导未来开发/决策/修复/测试的内容才写入 `FIX_GUIDE.md`。
+- 如果本轮只是历史修正、一次性排查或不会改变后续行动规则，不更新 `FIX_GUIDE.md`，但必须在 `progress.md` 写明无需更新。
+- `FIX_GUIDE.md` 应保持短而可执行，优先使用模块边界、决策流程、必测项、禁止回加路径、验证命令。
+- 不把完整复盘、旧版本细节、已废弃方案写入 `FIX_GUIDE.md`；这些内容留在对应版本 `debrief.md` 或 `RETRO.md` 索引中。
 
 版本选择规则：
 
@@ -108,7 +140,8 @@ Get-Content -LiteralPath 'docs\phase2.Fix Problem\RETRO.md' -Encoding utf8
 一轮 fix 只有在以下条件都满足时才算完成：
 
 - `proposal.md`、`task.md`、`progress.md`、`debrief.md` 都存在。
-- 本轮 `debrief.md` 中跨版本可复用的教训已经同步合并到 `RETRO.md`。
+- 已判断并记录是否需要更新 `FIX_GUIDE.md`；需要时已更新。
+- 本轮 `debrief.md` 中需要追溯的历史索引已经同步写入 `RETRO.md`。
 - 用户确认过的关键决策已经写入文档。
 - 实现与文档范围一致。
 - 测试覆盖本轮变更的核心行为。

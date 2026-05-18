@@ -12,12 +12,18 @@ type FakeEvent = {
 
 type Listener = (event: FakeEvent) => void;
 
+type GenerateMessage = {
+  type: "GENERATE";
+  propertyMapping: Record<string, string[]>;
+};
+
 class FakeElement {
   textContent = "";
   innerHTML = "";
   value = "";
   disabled = false;
   hidden = false;
+  dataset: Record<string, string> = {};
   private listeners = new Map<string, Listener[]>();
 
   addEventListener(eventName: string, listener: Listener) {
@@ -43,6 +49,20 @@ class FakeElement {
   clickWithDatasetAction(action: string) {
     const target = { dataset: { action } } as unknown as FakeElement;
     (this.listeners.get("click") ?? []).forEach((listener) =>
+      listener({ target, clientX: 0, clientY: 0, preventDefault: vi.fn() }),
+    );
+  }
+
+  inputField(field: string, value: string) {
+    const escapedField = escapeRegExp(field);
+    this.innerHTML = this.innerHTML.replace(
+      new RegExp(`(<input[^>]+data-field="${escapedField}"[^>]+value=")([^"]*)("[^>]*>)`),
+      `$1${escapeReplacement(value)}$3`,
+    );
+    const target = new FakeElement();
+    target.dataset = { field };
+    target.value = value;
+    (this.listeners.get("input") ?? []).forEach((listener) =>
       listener({ target, clientX: 0, clientY: 0, preventDefault: vi.fn() }),
     );
   }
@@ -159,6 +179,17 @@ function mountUi() {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function escapeReplacement(value: string) {
+  return value.replace(/\$/g, "$$$$");
+}
+
+function isGenerateMessage(message: unknown): message is GenerateMessage {
+  if (typeof message !== "object" || message === null || !("type" in message) || !("propertyMapping" in message)) {
+    return false;
+  }
+  return message.type === "GENERATE" && typeof message.propertyMapping === "object" && message.propertyMapping !== null;
 }
 
 const templates = [
@@ -297,6 +328,52 @@ describe("Plugin UI bridge", () => {
       },
     });
     expect(fakeDocument.get("#generateButton").disabled).toBe(true);
+  });
+
+  it("生成时保留用户手动修改的字段映射，不回退到默认值", () => {
+    const sent: unknown[] = [];
+    const fakeDocument = mountUi();
+    const controller = createOutline2PageUiController({
+      root: fakeDocument as unknown as Document,
+      postMessage: (message) => sent.push(message),
+    });
+
+    controller.receive({ type: "TEMPLATES_SCANNED", templates, warnings: [] });
+    controller.receive({
+      type: "OUTLINE_PARSED",
+      document: {
+        vision: "演示",
+        hasToc: false,
+        warnings: [],
+        chapters: [{ id: "chapter-1", index: 1, title: "第一章", sourceLine: 2, titles: [] }],
+      },
+      summary: {
+        vision: "演示",
+        chapterCount: 1,
+        titleCount: 0,
+        stepCount: 0,
+        estimatedPageCount: 2,
+        requiredPageKinds: ["COVER", "CHAPTER"],
+      },
+    });
+
+    const customChapterMapping = "PAGE_CHAPTER_TEXT + PAGE_CHAPTER_TEXT (HUGE) + CUSTOM_CHAPTER_TEXT";
+    fakeDocument.get("#properties").inputField("chapterTitle", customChapterMapping);
+    fakeDocument.get("#markdown").value = "《演示》\n## 第一章";
+    fakeDocument.get("#generateButton").click();
+
+    const generateMessage = sent.find(isGenerateMessage);
+
+    expect(generateMessage?.propertyMapping.chapterTitle).toEqual([
+      "PAGE_CHAPTER_TEXT",
+      "PAGE_CHAPTER_TEXT (HUGE)",
+      "CUSTOM_CHAPTER_TEXT",
+    ]);
+    expect(fakeDocument.get("#properties").innerHTML).toContain(customChapterMapping);
+
+    controller.receive({ type: "ERROR", message: "生成失败", details: "模板不存在" });
+
+    expect(fakeDocument.get("#properties").innerHTML).toContain(customChapterMapping);
   });
 
   it("用中文字段渲染字段映射下拉，并从扫描结果收集映射", () => {

@@ -96,7 +96,7 @@ export function extractTemplateKind(name: string): string {
 }
 
 export function normalizeComponentPropertyName(name: string): string {
-  return name.split("#", 1)[0].trim();
+  return name.replace(/#[^/.]+/g, "").trim();
 }
 
 export function isInjectableTextPropertyName(name: string): boolean {

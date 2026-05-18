@@ -1,6 +1,5 @@
 import type { AdapterWarning, ChapterNode, InstanceNode, OutlineDocument, PagePlanItem, SceneNode, StepNode, TitleNode } from "./figma-types";
 import {
-  formatTwoDigit,
   isInstanceNode,
   normalizeComponentPropertyName,
   readComponentProperties,
@@ -462,15 +461,14 @@ function getStep(title: TitleNode, index: number): StepNode | undefined {
 
 function buildNavigationTextPatch(item: NavItem, label: string, propertyNames: string[]): Record<string, string> {
   const targetsByKind: Record<NavKind, string[]> = {
-    CHAPTER: ["PAGE_CHAPTER_TEXT", "PAGE_CHAPTER_TEXT (HUGE)", "TOC_CHAPTER_TEXT"],
-    TITLE: ["PAGE_TITLE_TEXT", "TOC_TITLE_TEXT"],
+    CHAPTER: ["PAGE_CHAPTER_TEXT", "PAGE_CHAPTER_TEXT (HUGE)"],
+    TITLE: ["PAGE_TITLE_TEXT"],
     STEP: ["PAGE_STEP_TEXT"],
   };
   const patch: Record<string, string> = {};
   for (const rawName of propertyNames) {
     const name = normalizeNavigationPropertyName(rawName);
     if (targetsByKind[item.kind].includes(name)) patch[rawName] = label;
-    if (name === "TOC_NUM_TEXT" && item.kind === "CHAPTER") patch[rawName] = formatTwoDigit(item.logicalIndex);
   }
   return patch;
 }

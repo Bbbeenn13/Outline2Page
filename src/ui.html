@@ -511,6 +511,7 @@
         document: null,
         summary: null,
         report: null,
+        propertyMappingDrafts: {},
         fileComponentProperties: [],
         filePropertyWarnings: [],
         error: null,
@@ -721,7 +722,9 @@
       }
 
       function propertyMappingRow(field, options) {
-        const value = chooseDefaultProperties(field, options).join(" + ");
+        const value = Object.prototype.hasOwnProperty.call(state.propertyMappingDrafts, field.key)
+          ? state.propertyMappingDrafts[field.key] || ""
+          : chooseDefaultProperties(field, options).join(" + ");
         return `<label class="mapping-row">
           <span>${escapeHtml(field.label)}</span>
           <input class="mapping-input" type="text" data-field="${escapeAttr(field.key)}" value="${escapeAttr(value)}">
@@ -738,6 +741,13 @@
           result.push(target);
         });
         return result;
+      }
+
+      function syncPropertyMappingDrafts() {
+        propertyFields.forEach((field) => {
+          const input = elements.properties.querySelector(`input[data-field="${cssEscape(field.key)}"]`);
+          if (input) state.propertyMappingDrafts[field.key] = input.value;
+        });
       }
 
       function renderFileProperties() {
@@ -907,6 +917,12 @@
       elements.markdown.addEventListener("input", requestParse);
       elements.scanButton.addEventListener("click", () => post({ type: "SCAN_TEMPLATES" }));
       installResizeHandle();
+      elements.properties.addEventListener("input", (event) => {
+        const target = event.target;
+        if (target && target.dataset && target.dataset.field) {
+          state.propertyMappingDrafts[target.dataset.field] = target.value || "";
+        }
+      });
       elements.fileProperties.addEventListener("click", (event) => {
         const target = event.target;
         if (target && target.dataset && target.dataset.action === "scan-file-properties") {
@@ -915,6 +931,7 @@
       });
       elements.generateButton.addEventListener("click", () => {
         if (!state.summary) return;
+        syncPropertyMappingDrafts();
         const templateMapping = collectTemplateMapping();
         const propertyMapping = collectPropertyMapping();
         state.generating = true;

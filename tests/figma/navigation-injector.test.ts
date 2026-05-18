@@ -300,6 +300,33 @@ describe("NavigationInjector", () => {
     });
   });
 
+  it("does not write TOC text properties from PAGE_NAV_group", () => {
+    const chapterSlot = createMockNode({
+      name: "PAGE_NAV_group",
+      type: "INSTANCE",
+      componentProperties: {
+        TYPE: variantProperty("CHAPTER"),
+        "SHOW#visible": boolProperty(false),
+        "HIGHLIGHT#state": variantProperty("off"),
+        PAGE_CHAPTER_TEXT: textProperty("page chapter"),
+        TOC_CHAPTER_TEXT: textProperty("toc chapter"),
+        TOC_NUM_TEXT: textProperty("00"),
+      },
+    });
+    const root = createMockNode({ name: "02.Chapter One", type: "FRAME" }, [chapterSlot]);
+
+    const result = injectNavigation({ node: root, page: { ...page, kind: "CHAPTER", titleIndex: undefined, stepIndex: undefined }, document });
+
+    expect(result.warnings).toEqual([]);
+    expect(combinedProperties(chapterSlot)).toMatchObject({
+      PAGE_CHAPTER_TEXT: "Chapter One",
+      "SHOW#visible": true,
+      "HIGHLIGHT#state": "on",
+    });
+    expect(combinedProperties(chapterSlot)).not.toHaveProperty("TOC_CHAPTER_TEXT");
+    expect(combinedProperties(chapterSlot)).not.toHaveProperty("TOC_NUM_TEXT");
+  });
+
   it("uses current frame title for a single PAGE_TITLE breadcrumb slot", () => {
     const currentPage: PagePlanItem = {
       ...page,

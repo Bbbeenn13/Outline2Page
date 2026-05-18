@@ -28,99 +28,45 @@ const document: OutlineDocument = {
   ],
 };
 
-function tocChapterGroup(y: number, titleSlotCount = 1) {
-  const meta = createMockNode({
-    name: "ChapterContent",
-    type: "INSTANCE",
-    componentProperties: {
-      "TOC_CHAPTER_TEXT#chapter": textProperty(),
-      TOC_NUM_TEXT: textProperty(),
-      TOC_PAGE_RANGE_TEXT: textProperty(),
-      SHOW: boolProperty(false),
-    },
-  });
-  const slots = Array.from({ length: titleSlotCount }, (_, index) =>
-    createMockNode({
-      name: "TitleSlot",
-      type: "INSTANCE",
-      x: index * 80,
-      y: 24,
-      width: 72,
-      componentProperties: {
-        TOC_TITLE_TEXT: textProperty(),
-        SHOW: boolProperty(false),
-      },
-    }),
-  );
-  return createMockNode({ name: "TOC_NAV_group", type: "FRAME", x: 0, y, height: 40 }, [meta, ...slots]);
-}
-
-function typedTocChapterGroup(y: number, titleSlotCount = 1) {
-  const titleProperties = Object.fromEntries(
-    Array.from({ length: titleSlotCount }, (_, index) => [`TOC_TITLE_TEXT#${String(index + 1)}`, textProperty()]),
-  );
+function tocNavItem(
+  type: string,
+  textKey: string,
+  textValue: string,
+  x: number,
+  y: number,
+): MockNode {
   return createMockNode({
-    name: "TOC_NAV_group",
-    type: "INSTANCE",
-    x: 0,
-    y,
-    height: 40,
-    componentProperties: {
-      TYPE: variantProperty("01"),
-      "TOC_CHAPTER_TEXT#chapter": textProperty(),
-      TOC_NUM_TEXT: textProperty(),
-      TOC_PAGE_RANGE_TEXT: textProperty(),
-      SHOW: boolProperty(false),
-      ...titleProperties,
-    },
-  });
-}
-
-function prefixedTocChapterGroup(y: number) {
-  return createMockNode({
-    name: "TOC_NAV_group",
-    type: "INSTANCE",
-    x: 0,
-    y,
-    height: 40,
-    componentProperties: {
-      TYPE: variantProperty("01"),
-      "NAV_item/TOC_NUM_TEXT#num": textProperty(),
-      "NAV_item/TOC_CHAPTER_TEXT#chapter": textProperty(),
-      "NAV_item/TOC_PAGE_RANGE_TEXT#range": textProperty(),
-      "NAV_item/TOC_TITLE_TEXT#1": textProperty(),
-      "NAV_item/TOC_TITLE_TEXT#2": textProperty(),
-      "NAV_item/SHOW#show": boolProperty(false),
-    },
-  });
-}
-
-function nestedPrefixedTocChapterGroup(y: number) {
-  const meta = createMockNode({
     name: "NAV_item",
     type: "INSTANCE",
+    x,
+    y,
+    width: 72,
+    height: 20,
     componentProperties: {
-      "NAV_item/TOC_NUM_TEXT#num": textProperty(),
-      "NAV_item/TOC_CHAPTER_TEXT#chapter": textProperty(),
-      "NAV_item/TOC_PAGE_RANGE_TEXT#range": textProperty(),
-      "NAV_item/SHOW#show": boolProperty(false),
+      TYPE: variantProperty(type),
+      [textKey]: textProperty(textValue),
+      SHOW: boolProperty(false),
     },
   });
-  const titleRow = createMockNode(
-    { name: "TitleRow", type: "FRAME", x: 0, y: 24, width: 72 },
-    [
-      createMockNode({
-        name: "NAV_item",
-        type: "INSTANCE",
-        componentProperties: {
-          "NAV_item/TOC_TITLE_TEXT#title": textProperty(),
-          "NAV_item/SHOW#show": boolProperty(false),
-        },
-      }),
-    ],
-  );
-  (titleRow.children[0] as MockNode).cloneDisabled = true;
-  return createMockNode({ name: "TOC_NAV_group", type: "FRAME", x: 0, y, height: 40 }, [meta, titleRow]);
+}
+
+function tocNavGroup(y: number, titleSlotCount = 3): MockNode {
+  const children = [
+    tocNavItem("TOC_NUM", "TOC_NUM_TEXT", "00", 0, 0),
+    tocNavItem("TOC_CHAPTER", "TOC_CHAPTER_TEXT", "chapter", 44, 0),
+    tocNavItem("TOC_PAGE_RANGE", "TOC_PAGE_RANGE_TEXT", "00-00", 180, 0),
+    ...Array.from({ length: titleSlotCount }, (_, index) => tocNavItem("TOC_TITLE", "TOC_TITLE_TEXT", "title", 44, 28 + index * 24)),
+  ];
+
+  return createMockNode({ name: "TOC_NAV_group", type: "FRAME", x: 0, y, height: 120 }, children);
+}
+
+function combinedProperties(node: MockNode): Record<string, string | boolean> {
+  return Object.assign({}, ...node.setPropertiesCalls) as Record<string, string | boolean>;
+}
+
+function rowItems(row: MockNode): MockNode[] {
+  return row.children.filter((child) => child.name === "NAV_item") as MockNode[];
 }
 
 describe("TocExpander", () => {
@@ -131,41 +77,8 @@ describe("TocExpander", () => {
     ]);
   });
 
-  it("does not copy TOC_NAV_group for every title and expands title slots inside the chapter group", () => {
-    const first = tocChapterGroup(0, 1);
-    const second = tocChapterGroup(48, 1);
-    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first, second]);
-
-    const result = expandAndInjectToc({
-      tocNode,
-      document,
-      chapterRanges: { 1: "02-04", 2: "05-05" },
-    });
-
-    expect(result.expandedCount).toBe(0);
-    const groups = tocNode.children.filter((child) => child.name === "TOC_NAV_group");
-    expect(groups).toHaveLength(2);
-
-    const firstGroup = groups[0] as MockNode;
-    const firstMeta = firstGroup.children[0] as MockNode;
-    const firstTitleSlots = firstGroup.children.filter((child) => child.name === "TitleSlot") as MockNode[];
-    expect(firstTitleSlots).toHaveLength(2);
-    expect(firstMeta.setPropertiesCalls[0]).toMatchObject({
-      "TOC_CHAPTER_TEXT#chapter": "Chapter One",
-      TOC_NUM_TEXT: "01",
-      TOC_PAGE_RANGE_TEXT: "02-04",
-      SHOW: true,
-    });
-    expect(firstTitleSlots[0].setPropertiesCalls[0]).toMatchObject({ TOC_TITLE_TEXT: "Title One", SHOW: true });
-    expect(firstTitleSlots[1].setPropertiesCalls[0]).toMatchObject({ TOC_TITLE_TEXT: "Title Two", SHOW: true });
-
-    const secondGroup = groups[1] as MockNode;
-    const secondTitleSlot = secondGroup.children[1] as MockNode;
-    expect(secondTitleSlot.setPropertiesCalls[0]).toMatchObject({ TOC_TITLE_TEXT: "", SHOW: false });
-  });
-
   it("expands TOC_NAV_group only to chapter count", () => {
-    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [tocChapterGroup(0, 2)]);
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [tocNavGroup(0)]);
 
     const result = expandAndInjectToc({
       tocNode,
@@ -176,7 +89,7 @@ describe("TocExpander", () => {
     const groups = tocNode.children.filter((child) => child.name === "TOC_NAV_group");
     expect(result.expandedCount).toBe(1);
     expect(groups).toHaveLength(2);
-    expect(groups.map((row) => row.y)).toEqual([0, 48]);
+    expect(groups.map((row) => row.y)).toEqual([0, 128]);
   });
 
   it("returns warning when TOC_NAV_group is missing", () => {
@@ -203,78 +116,106 @@ describe("TocExpander", () => {
     expect(result.warnings[0].code).toBe("TOC_NAV_GROUP_MISSING");
   });
 
-  it("writes multiple TOC_TITLE_TEXT properties exposed by one TOC_NAV_group", () => {
-    const first = typedTocChapterGroup(0, 2);
-    const second = typedTocChapterGroup(48, 1);
-    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first, second]);
+  it("writes flat TOC NAV_item instances by TYPE and hides surplus title slots", () => {
+    const first = tocNavGroup(0);
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first]);
 
     const result = expandAndInjectToc({
       tocNode,
       document,
-      chapterRanges: { 1: "02-04", 2: "05-05" },
+      chapterRanges: { 1: "02-04" },
     });
 
-    expect(result.expandedCount).toBe(0);
+    const [num, chapter, range, title1, title2, title3] = rowItems(first);
     expect(result.warnings).toEqual([]);
-
-    expect(first.setPropertiesCalls[0]).toMatchObject({
-      "TOC_CHAPTER_TEXT#chapter": "Chapter One",
-      TOC_NUM_TEXT: "01",
-      TOC_PAGE_RANGE_TEXT: "02-04",
-      SHOW: true,
-    });
-    expect(Object.assign({}, ...first.setPropertiesCalls)).toMatchObject({
-      "TOC_TITLE_TEXT#1": "Title One",
-      "TOC_TITLE_TEXT#2": "Title Two",
-    });
+    expect(combinedProperties(num)).toMatchObject({ TOC_NUM_TEXT: "01", SHOW: true });
+    expect(combinedProperties(chapter)).toMatchObject({ TOC_CHAPTER_TEXT: "Chapter One", SHOW: true });
+    expect(combinedProperties(range)).toMatchObject({ TOC_PAGE_RANGE_TEXT: "02-04", SHOW: true });
+    expect(combinedProperties(title1)).toMatchObject({ TOC_TITLE_TEXT: "Title One", SHOW: true });
+    expect(combinedProperties(title2)).toMatchObject({ TOC_TITLE_TEXT: "Title Two", SHOW: true });
+    expect(combinedProperties(title3)).toMatchObject({ TOC_TITLE_TEXT: "", SHOW: false });
   });
 
-  it("matches TOC text properties exposed under nested NAV_item prefixes", () => {
-    const first = prefixedTocChapterGroup(0);
-    const second = prefixedTocChapterGroup(48);
-    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first, second]);
+  it("supports TOC_PAGE with TOC_PAGE_TEXT as a page range alias", () => {
+    const first = tocNavGroup(0);
+    const range = rowItems(first)[2];
+    range.componentProperties = {
+      TYPE: variantProperty("TOC_PAGE"),
+      TOC_PAGE_TEXT: textProperty("00-00"),
+      SHOW: boolProperty(false),
+    };
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first]);
 
     const result = expandAndInjectToc({
       tocNode,
-      document,
-      chapterRanges: { 1: "02-04", 2: "05-05" },
+      document: { ...document, chapters: [document.chapters[0]] },
+      chapterRanges: { 1: "02-04" },
     });
 
     expect(result.warnings).toEqual([]);
-    expect(Object.assign({}, ...first.setPropertiesCalls)).toMatchObject({
-      "NAV_item/TOC_NUM_TEXT#num": "01",
-      "NAV_item/TOC_CHAPTER_TEXT#chapter": "Chapter One",
-      "NAV_item/TOC_PAGE_RANGE_TEXT#range": "02-04",
-      "NAV_item/TOC_TITLE_TEXT#1": "Title One",
-      "NAV_item/TOC_TITLE_TEXT#2": "Title Two",
-      "NAV_item/SHOW#show": true,
-    });
+    expect(combinedProperties(range)).toMatchObject({ TOC_PAGE_TEXT: "02-04", SHOW: true });
   });
 
-  it("expands nested title row containers when inner TOC_TITLE_TEXT instances cannot be cloned", () => {
-    const first = nestedPrefixedTocChapterGroup(0);
-    const second = nestedPrefixedTocChapterGroup(48);
-    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first, second]);
+  it("clones flat TOC_TITLE item slots when titles are more than template slots", () => {
+    const oneChapterDocument: OutlineDocument = { ...document, chapters: [document.chapters[0]] };
+    const first = tocNavGroup(0, 1);
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first]);
 
     const result = expandAndInjectToc({
       tocNode,
-      document,
-      chapterRanges: { 1: "02-04", 2: "05-05" },
+      document: oneChapterDocument,
+      chapterRanges: { 1: "02-04" },
     });
 
+    const titles = rowItems(first).filter((item) => item.componentProperties?.TYPE.value === "TOC_TITLE");
     expect(result.warnings).toEqual([]);
+    expect(titles).toHaveLength(2);
+    expect(combinedProperties(titles[0])).toMatchObject({ TOC_TITLE_TEXT: "Title One", SHOW: true });
+    expect(combinedProperties(titles[1])).toMatchObject({ TOC_TITLE_TEXT: "Title Two", SHOW: true });
+  });
 
-    const titleRows = first.children.filter((child) => child.name === "TitleRow") as MockNode[];
-    expect(titleRows).toHaveLength(2);
-    const firstTitle = titleRows[0].children[0] as MockNode;
-    const secondTitle = titleRows[1].children[0] as MockNode;
-    expect(firstTitle.setPropertiesCalls[0]).toMatchObject({
-      "NAV_item/TOC_TITLE_TEXT#title": "Title One",
-      "NAV_item/SHOW#show": true,
+  it("warns when flat TOC_TITLE slots are missing", () => {
+    const oneChapterDocument: OutlineDocument = { ...document, chapters: [document.chapters[0]] };
+    const first = tocNavGroup(0, 0);
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first]);
+
+    const result = expandAndInjectToc({
+      tocNode,
+      document: oneChapterDocument,
+      chapterRanges: { 1: "02-04" },
     });
-    expect(secondTitle.setPropertiesCalls[0]).toMatchObject({
-      "NAV_item/TOC_TITLE_TEXT#title": "Title Two",
-      "NAV_item/SHOW#show": true,
+
+    expect(result.warnings.map((item) => item.code)).toContain("TOC_TITLE_SLOT_MISSING");
+  });
+
+  it("keeps writing TOC text when SHOW write fails", () => {
+    const oneChapterDocument: OutlineDocument = { ...document, chapters: [document.chapters[0]] };
+    const first = tocNavGroup(0);
+    const items = rowItems(first);
+    for (const item of items) {
+      const originalSetProperties = item.setProperties.bind(item);
+      item.setProperties = (properties: Record<string, string | boolean>): void => {
+        if (Object.keys(properties).some((key) => key === "SHOW")) {
+          throw new Error("Unable to write SHOW");
+        }
+        originalSetProperties(properties);
+      };
+    }
+    const tocNode = createMockNode({ name: "TOC", type: "FRAME" }, [first]);
+
+    const result = expandAndInjectToc({
+      tocNode,
+      document: oneChapterDocument,
+      chapterRanges: { 1: "02-04" },
     });
+
+    const [num, chapter, range, title1, title2, title3] = items;
+    expect(result.warnings.map((item) => item.code)).toContain("TOC_PROPERTY_WRITE_FAILED");
+    expect(combinedProperties(num)).toMatchObject({ TOC_NUM_TEXT: "01" });
+    expect(combinedProperties(chapter)).toMatchObject({ TOC_CHAPTER_TEXT: "Chapter One" });
+    expect(combinedProperties(range)).toMatchObject({ TOC_PAGE_RANGE_TEXT: "02-04" });
+    expect(combinedProperties(title1)).toMatchObject({ TOC_TITLE_TEXT: "Title One" });
+    expect(combinedProperties(title2)).toMatchObject({ TOC_TITLE_TEXT: "Title Two" });
+    expect(combinedProperties(title3)).toMatchObject({ TOC_TITLE_TEXT: "" });
   });
 });

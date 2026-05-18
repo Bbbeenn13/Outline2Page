@@ -29,6 +29,24 @@ describe("GeneratedSectionManager", () => {
     expect(page.children).toContain(result.section);
   });
 
+  it("清理旧版本遗留的默认命名生成 Section，避免旧结果叠在新结果下面", () => {
+    const legacyGenerated = createMockNode({ name: "Outline2Page_GENERATED", type: "SECTION" });
+    const userSection = createMockNode({ name: "User Section", type: "SECTION" });
+    const page = createPage([legacyGenerated, userSection]);
+    const runtime = createRuntime(page);
+
+    const result = prepareGeneratedSection({
+      currentPage: page,
+      figma: runtime,
+      generatedAt: "2026-05-17T00:00:00.000Z",
+    });
+
+    expect(result.removedCount).toBe(1);
+    expect(legacyGenerated.removed).toBe(true);
+    expect(userSection.removed).toBe(false);
+    expect(page.children).toContain(result.section);
+  });
+
   it("可以在生成完成后选中新 Section", () => {
     const page = createPage();
     const runtime = createRuntime(page);
