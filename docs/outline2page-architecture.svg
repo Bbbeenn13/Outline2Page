@@ -1,207 +1,174 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
-  <title id="title">Outline2Page 运行架构图</title>
-  <desc id="desc">展示 Outline2Page 从 Markdown 大纲到 Figma 页面生成、属性注入、目录展开和生成报告的完整流程。</desc>
+  <title id="title">Outline2Page 项目理解图</title>
+  <desc id="desc">用黑白灰信息层次展示 Outline2Page 的核心目标、主要组件、模板系统和生成产物。</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fbfcfe" />
-      <stop offset="100%" stop-color="#f6f8fc" />
-    </linearGradient>
-    <linearGradient id="blueHeader" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="100%" stop-color="#60a5fa" />
-    </linearGradient>
-    <linearGradient id="slateHeader" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#334155" />
-    </linearGradient>
-    <linearGradient id="greenHeader" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#059669" />
-      <stop offset="100%" stop-color="#10b981" />
-    </linearGradient>
     <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#111827" />
+    </marker>
+    <marker id="softArrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3af" />
     </marker>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
-      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.08" />
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#111827" flood-opacity="0.07" />
     </filter>
     <style>
-      .title { font: 700 42px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
-      .subtitle { font: 400 18px/1.5 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; }
-      .section-title { font: 700 22px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; }
-      .section-note { font: 400 14px/1.4 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #e2e8f0; }
-      .card-title { font: 700 20px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
-      .card-body { font: 400 15px/1.45 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
-      .card-code { font: 600 14px/1.4 "JetBrains Mono", "SFMono-Regular", Consolas, monospace; fill: #0f172a; }
-      .panel { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1.5; rx: 28; filter: url(#shadow); }
-      .chip { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1.2; }
-      .pill { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1; rx: 18; }
-      .pill-label { font: 700 13px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
-      .pill-value { font: 600 14px/1.2 "JetBrains Mono", "SFMono-Regular", Consolas, monospace; fill: #0f172a; }
-      .arrow { stroke: #94a3b8; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
-      .arrow-dashed { stroke: #94a3b8; stroke-width: 2.8; fill: none; marker-end: url(#arrow); stroke-dasharray: 9 8; }
-      .tag { font: 700 12px/1 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; letter-spacing: 0.04em; }
-      .badge { fill: #0f172a; rx: 14; }
-      .mini { font: 700 13px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; }
+      .bg { fill: #f7f7f5; }
+      .ink { fill: #111827; }
+      .muted { fill: #6b7280; }
+      .subtle { fill: #9ca3af; }
+      .title { font: 760 46px/1.2 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #111827; }
+      .subtitle { font: 400 19px/1.55 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #4b5563; }
+      .eyebrow { font: 700 13px/1 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #6b7280; letter-spacing: 0.08em; }
+      .panel-title { font: 760 24px/1.2 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #111827; }
+      .panel-note { font: 400 15px/1.45 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #6b7280; }
+      .card-title { font: 730 19px/1.25 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #111827; }
+      .card-body { font: 400 15px/1.5 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #374151; }
+      .small { font: 500 13px/1.35 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #6b7280; }
+      .code { font: 650 13px/1.35 "Cascadia Mono", "JetBrains Mono", Consolas, monospace; fill: #111827; }
+      .panel { fill: #ffffff; stroke: #d4d4d4; stroke-width: 1.4; rx: 24; filter: url(#shadow); }
+      .soft-panel { fill: #fbfbfa; stroke: #d4d4d4; stroke-width: 1.2; rx: 18; }
+      .dark-panel { fill: #111827; rx: 24; filter: url(#shadow); }
+      .dark-title { font: 760 24px/1.2 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; }
+      .dark-note { font: 400 15px/1.45 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #d1d5db; }
+      .unit { fill: #ffffff; stroke: #d4d4d4; stroke-width: 1.1; rx: 14; }
+      .unit-alt { fill: #f2f2f0; stroke: #d4d4d4; stroke-width: 1.1; rx: 14; }
+      .thin-line { stroke: #d4d4d4; stroke-width: 1.4; fill: none; }
+      .flow { stroke: #111827; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .soft-flow { stroke: #9ca3af; stroke-width: 2.2; fill: none; marker-end: url(#softArrow); }
+      .accent { fill: #2563eb; }
+      .accent-stroke { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .label { font: 720 12px/1 "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; letter-spacing: 0.05em; }
     </style>
   </defs>
 
-  <rect class="bg" x="0" y="0" width="1800" height="1120" />
+  <rect class="bg" width="1800" height="1120" />
 
-  <text class="title" x="80" y="88">Outline2Page 运行架构图</text>
-  <text class="subtitle" x="80" y="122">Markdown 大纲 → 结构解析 → 模板匹配 → Figma 页面生成 → 报告与覆盖</text>
-  <rect x="1528" y="52" width="192" height="34" class="badge" />
-  <text class="tag" x="1566" y="75">README 可直接使用</text>
+  <text class="eyebrow" x="80" y="64">FIGMA PLUGIN / README OVERVIEW</text>
+  <text class="title" x="80" y="112">Outline2Page 项目理解图</text>
+  <text class="subtitle" x="80" y="150">把结构化 Markdown 大纲转成可覆盖、可复用、可报告的 Figma 页面生产系统。</text>
+  <rect class="accent" x="1560" y="72" width="160" height="34" rx="17" />
+  <text class="label" x="1597" y="94">5% 色彩强调</text>
 
-  <g transform="translate(80 160)">
-    <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
-    <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#blueHeader)" />
-    <text class="section-title" x="28" y="42">输入与预览</text>
-    <text class="section-note" x="28" y="60">src/ui/ui-controller.ts</text>
-
-    <rect x="28" y="100" width="424" height="112" rx="20" class="chip" fill="#eff6ff" />
-    <text class="card-title" x="50" y="137">Markdown 大纲</text>
-    <text class="card-body" x="50" y="165">直接粘贴章节结构，实时触发解析</text>
-    <text class="card-code" x="50" y="192">Vision / TOC / CHAPTER / TITLE / STEP</text>
-
-    <path class="arrow" d="M 240 224 L 240 258" />
-
-    <rect x="28" y="258" width="424" height="162" rx="20" class="chip" fill="#ffffff" />
-    <text class="card-title" x="50" y="294">UI 预览层</text>
-    <text class="card-body" x="50" y="322">结构树、统计、模板选择、属性映射、警告、报告</text>
-    <g transform="translate(50 344)">
-      <rect x="0" y="0" width="112" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="18" y="20">解析预览</text>
-      <rect x="124" y="0" width="108" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="147" y="20">模板选项</text>
-      <rect x="244" y="0" width="130" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="266" y="20">属性映射</text>
-      <rect x="0" y="42" width="108" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="23" y="62">生成报告</text>
-      <rect x="120" y="42" width="92" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="145" y="62">警告</text>
-      <rect x="224" y="42" width="96" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="244" y="62">树状图</text>
-    </g>
-
-    <path class="arrow-dashed" d="M 240 440 L 240 476" />
-
-    <rect x="28" y="476" width="424" height="194" rx="20" class="chip" fill="#f8fbff" />
-    <text class="card-title" x="50" y="512">Figma 扫描输入</text>
-    <text class="card-body" x="50" y="540">从当前文件读取可用模板与组件属性</text>
-    <g transform="translate(50 562)">
-      <rect x="0" y="0" width="168" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="18" y="21">scanTemplates()</text>
-      <rect x="182" y="0" width="210" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="200" y="21">scanFileComponentProperties()</text>
-      <rect x="0" y="46" width="178" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="18" y="67">PAGE_TEMP* 模板</text>
-      <rect x="194" y="46" width="198" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="212" y="67">TOC / PAGE 属性名</text>
-    </g>
-
-    <text class="mini" x="50" y="660">输入会驱动预览与后续模板选择</text>
+  <g transform="translate(80 205)">
+    <rect class="dark-panel" x="0" y="0" width="410" height="250" rx="24" />
+    <text class="dark-title" x="28" y="48">项目要解决什么</text>
+    <text class="dark-note" x="28" y="84">设计师不需要写插件代码，</text>
+    <text class="dark-note" x="28" y="110">只需要准备大纲和模板。</text>
+    <line x1="28" y1="140" x2="382" y2="140" stroke="#4b5563" stroke-width="1.2" />
+    <text class="dark-note" x="28" y="176">输入是内容结构，输出是</text>
+    <text class="dark-note" x="28" y="202">排好版、写好属性、带导航状态的 Frame。</text>
   </g>
 
-  <g transform="translate(660 160)">
-    <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
-    <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#slateHeader)" />
-    <text class="section-title" x="28" y="42">核心规划</text>
-    <text class="section-note" x="28" y="60">src/core/*</text>
+  <g transform="translate(535 205)">
+    <rect class="panel" x="0" y="0" width="1185" height="250" rx="24" />
+    <text class="panel-title" x="30" y="48">用户看到的是一个原生 Figma 风格工具</text>
+    <text class="panel-note" x="30" y="78">它把复杂的生成逻辑收敛成四个可理解的操作区，避免用户理解内部代码。</text>
 
-    <rect x="28" y="100" width="424" height="120" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="138">1. 解析与分析</text>
-    <text class="card-body" x="50" y="166">parseOutline() + analyzeOutline()</text>
-    <text class="card-body" x="50" y="192">把 Markdown 转成结构化文档与页面规模</text>
-
-    <path class="arrow" d="M 240 224 L 240 248" />
-
-    <rect x="28" y="248" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="286">2. 模板匹配</text>
-    <text class="card-body" x="50" y="314">mapTemplates() 根据页面类型分配模板</text>
-    <text class="card-body" x="50" y="340">输出 COVER / TOC / CHAPTER / TITLE / STEP</text>
-
-    <path class="arrow" d="M 240 374 L 240 398" />
-
-    <rect x="28" y="398" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="436">3. 页面规划</text>
-    <text class="card-body" x="50" y="464">createPagePlan() + applyPagination()</text>
-    <text class="card-body" x="50" y="490">把章节、标题、小节排成可生成页面序列</text>
-
-    <path class="arrow" d="M 240 524 L 240 548" />
-
-    <rect x="28" y="548" width="424" height="118" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="586">4. 布局计算</text>
-    <text class="card-body" x="50" y="614">calculateLayout() 计算横向 / 纵向间距</text>
-    <text class="card-body" x="50" y="640">确保连续生成时不重叠</text>
-
-    <path class="arrow" d="M 240 668 L 240 692" />
-
-    <rect x="28" y="692" width="424" height="52" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="724">5. 报告汇总</text>
-    <text class="card-body" x="200" y="724">buildGenerationReport()</text>
-  </g>
-
-  <g transform="translate(1240 160)">
-    <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
-    <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#greenHeader)" />
-    <text class="section-title" x="28" y="42">Figma 生成与覆盖</text>
-    <text class="section-note" x="28" y="60">src/figma/*</text>
-
-    <rect x="28" y="100" width="424" height="108" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="136">准备生成区</text>
-    <text class="card-body" x="50" y="164">prepareGeneratedSection() 先清理上一次结果</text>
-    <text class="card-body" x="50" y="190">生成专属 Section 并定位到当前页面</text>
-
-    <path class="arrow" d="M 240 216 L 240 240" />
-
-    <rect x="28" y="240" width="424" height="136" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="276">节点生成</text>
-    <text class="card-body" x="50" y="304">createNodeFromTemplate() 从模板复制 Frame</text>
-    <text class="card-body" x="50" y="330">为每个页面类型创建对应页面</text>
-    <text class="card-code" x="50" y="358">COVER / TOC / CHAPTER / TITLE / STEP</text>
-
-    <path class="arrow" d="M 240 382 L 240 406" />
-
-    <rect x="28" y="406" width="424" height="140" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="442">内容注入</text>
-    <text class="card-body" x="50" y="470">injectProperties() 写入标题、页码、TOC 信息</text>
-    <text class="card-body" x="50" y="496">injectNavigation() 同步高亮与导航状态</text>
-    <text class="card-body" x="50" y="522">expandAndInjectToc() 展开目录行</text>
-
-    <path class="arrow" d="M 240 546 L 240 570" />
-
-    <rect x="28" y="570" width="424" height="110" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="606">收口与对齐</text>
-    <text class="card-body" x="50" y="634">fitSectionToNodes() 自动包住生成内容</text>
-    <text class="card-body" x="50" y="658">selectGeneratedSection() 选中结果区</text>
-
-    <path class="arrow" d="M 240 680 L 240 704" />
-
-    <rect x="28" y="704" width="424" height="52" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="736">输出：新 Frame + 报告 + 警告</text>
-  </g>
-
-  <path class="arrow-dashed" d="M 560 540 C 620 540, 620 540, 660 540" />
-  <text class="section-note" x="585" y="522" fill="#64748b">模板 / 属性输入到规划层</text>
-  <path class="arrow-dashed" d="M 1140 520 C 1180 520, 1200 520, 1240 520" />
-  <text class="section-note" x="1148" y="502" fill="#64748b">规划结果进入 Figma 写入</text>
-
-  <g transform="translate(80 920)">
-    <rect x="0" y="0" width="1640" height="140" rx="28" fill="#ffffff" stroke="#dbe4f0" stroke-width="1.5" filter="url(#shadow)" />
-    <text class="card-title" x="30" y="42">生成结果</text>
-    <text class="card-body" x="30" y="68">一次生成后会覆盖上一次 Outline2Page 生成的 Section，并回写统计与警告</text>
-
-    <g transform="translate(30 84)">
-      <rect x="0" y="0" width="228" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="20" y="24">覆盖旧结果</text>
-      <rect x="246" y="0" width="188" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="266" y="24">生成 Section</text>
-      <rect x="454" y="0" width="188" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="474" y="24">TOC 展开</text>
-      <rect x="662" y="0" width="220" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="682" y="24">报告 / 警告 / 选中结果</text>
-      <rect x="902" y="0" width="190" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="922" y="24">回到 UI 预览</text>
+    <g transform="translate(30 112)">
+      <rect class="unit" x="0" y="0" width="260" height="98" rx="14" />
+      <text class="card-title" x="20" y="34">大纲输入</text>
+      <text class="card-body" x="20" y="62">粘贴 Markdown 层级</text>
+      <text class="code" x="20" y="84">Vision / CHAPTER / TITLE</text>
     </g>
+    <g transform="translate(306 112)">
+      <rect class="unit-alt" x="0" y="0" width="260" height="98" rx="14" />
+      <text class="card-title" x="20" y="34">解析预览</text>
+      <text class="card-body" x="20" y="62">看到章节、标题、小节数量</text>
+      <text class="small" x="20" y="84">提前发现结构问题</text>
+    </g>
+    <g transform="translate(582 112)">
+      <rect class="unit" x="0" y="0" width="260" height="98" rx="14" />
+      <text class="card-title" x="20" y="34">模板选择</text>
+      <text class="card-body" x="20" y="62">绑定 PAGE_TEMP 模板</text>
+      <text class="small" x="20" y="84">按页面类型自动收敛选项</text>
+    </g>
+    <g transform="translate(858 112)">
+      <rect class="unit-alt" x="0" y="0" width="260" height="98" rx="14" />
+      <text class="card-title" x="20" y="34">生成反馈</text>
+      <text class="card-body" x="20" y="62">报告生成、覆盖、警告</text>
+      <text class="small" x="20" y="84">生成后结果可追踪</text>
+    </g>
+  </g>
+
+  <path class="accent-stroke" d="M 285 480 C 285 515, 285 515, 285 550" />
+  <path class="flow" d="M 860 480 C 860 515, 860 515, 860 550" />
+  <path class="flow" d="M 1490 480 C 1490 515, 1490 515, 1490 550" />
+
+  <g transform="translate(80 550)">
+    <rect class="panel" x="0" y="0" width="500" height="355" rx="24" />
+    <text class="eyebrow" x="28" y="42">INPUT MODEL</text>
+    <text class="panel-title" x="28" y="76">内容模型</text>
+    <text class="panel-note" x="28" y="106">项目的起点不是画布，而是层级清晰的内容骨架。</text>
+
+    <g transform="translate(34 140)">
+      <rect class="unit-alt" x="0" y="0" width="432" height="168" rx="16" />
+      <text class="code" x="24" y="34">《Vision》 产品演示</text>
+      <text class="code" x="24" y="66"># TOC</text>
+      <text class="code" x="24" y="98">## 第一章</text>
+      <text class="code" x="24" y="130">### 关键问题</text>
+      <text class="code" x="24" y="162">##### 现状洞察</text>
+    </g>
+
+    <text class="card-body" x="34" y="335">核心价值：让页面数量、层级和命名都从同一份大纲派生。</text>
+  </g>
+
+  <g transform="translate(650 550)">
+    <rect class="panel" x="0" y="0" width="500" height="355" rx="24" />
+    <text class="eyebrow" x="28" y="42">CORE ENGINE</text>
+    <text class="panel-title" x="28" y="76">生成引擎组件</text>
+    <text class="panel-note" x="28" y="106">仓库的主要设计不是单个按钮，而是一组可测试的生成服务。</text>
+
+    <g transform="translate(34 138)">
+      <rect class="unit" x="0" y="0" width="200" height="66" rx="14" />
+      <text class="card-title" x="18" y="30">Parser</text>
+      <text class="small" x="18" y="52">读取 Markdown 层级</text>
+      <rect class="unit-alt" x="232" y="0" width="200" height="66" rx="14" />
+      <text class="card-title" x="250" y="30">Analyzer</text>
+      <text class="small" x="250" y="52">计算页面需求</text>
+      <rect class="unit-alt" x="0" y="90" width="200" height="66" rx="14" />
+      <text class="card-title" x="18" y="120">Planner</text>
+      <text class="small" x="18" y="142">形成页面序列</text>
+      <rect class="unit" x="232" y="90" width="200" height="66" rx="14" />
+      <text class="card-title" x="250" y="120">Layout</text>
+      <text class="small" x="250" y="142">计算画布位置</text>
+    </g>
+
+    <path class="soft-flow" d="M 234 171 L 266 171" />
+    <path class="soft-flow" d="M 132 204 L 132 228" />
+    <path class="soft-flow" d="M 366 204 L 366 228" />
+    <text class="card-body" x="34" y="335">核心价值：生成逻辑被拆成可维护、可回归测试的模块。</text>
+  </g>
+
+  <g transform="translate(1220 550)">
+    <rect class="panel" x="0" y="0" width="500" height="355" rx="24" />
+    <text class="eyebrow" x="28" y="42">FIGMA ADAPTER</text>
+    <text class="panel-title" x="28" y="76">模板与画布系统</text>
+    <text class="panel-note" x="28" y="106">Figma 文件提供视觉模板，插件只负责识别、复制和写入。</text>
+
+    <g transform="translate(34 138)">
+      <rect class="unit" x="0" y="0" width="432" height="62" rx="14" />
+      <text class="card-title" x="18" y="28">PAGE_TEMP 模板族</text>
+      <text class="small" x="230" y="28">COVER / TOC / CHAPTER / TITLE / STEP</text>
+
+      <rect class="unit-alt" x="0" y="82" width="198" height="76" rx="14" />
+      <text class="card-title" x="18" y="114">节点工厂</text>
+      <text class="small" x="18" y="138">复制模板成为 Frame</text>
+
+      <rect class="unit-alt" x="234" y="82" width="198" height="76" rx="14" />
+      <text class="card-title" x="252" y="114">注入器</text>
+      <text class="small" x="252" y="138">写入标题与导航状态</text>
+    </g>
+
+    <text class="card-body" x="34" y="335">核心价值：设计样式留在 Figma，代码只处理结构和数据。</text>
+  </g>
+
+  <path class="flow" d="M 580 730 C 610 730, 620 730, 650 730" />
+  <path class="flow" d="M 1150 730 C 1180 730, 1190 730, 1220 730" />
+
+  <g transform="translate(80 960)">
+    <rect class="soft-panel" x="0" y="0" width="1640" height="90" rx="22" />
+    <text class="panel-title" x="28" y="40">最终产物</text>
+    <text class="card-body" x="180" y="40">自动覆盖旧 Section，生成新 Frame，完成目录、页码、标题、导航状态写入，并在 UI 中返回报告。</text>
+    <text class="small" x="180" y="68">这张图的重点是项目如何把“内容结构”和“设计模板”合成一个可重复生产的 Figma 页面系统。</text>
   </g>
 </svg>
