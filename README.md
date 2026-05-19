@@ -4,7 +4,7 @@
 
 Turn structured Markdown outlines into reusable Figma pages.
 
-[中文](README.zh-CN.md) · [English](README.en.md)
+[English](README.en.md) · [中文](README.zh-CN.md)
 
 ![Project overview](docs/outline2page-architecture.svg)
 
@@ -12,9 +12,9 @@ Turn structured Markdown outlines into reusable Figma pages.
 
 ## What It Is
 
-Outline2Page is a Figma plugin for designers who want to turn content outlines into page structures without touching plugin code.
+Outline2Page is a Figma plugin for turning content outlines into page structures.
 
-It reads Markdown hierarchy, matches available `PAGE_TEMP` templates, clones frames, injects content, applies navigation states, and reports the result back in the plugin UI.
+It parses Markdown hierarchy, matches `PAGE_TEMP` templates, clones frames, injects content, updates navigation state, and returns a generation report.
 
 ## Highlights
 
@@ -37,11 +37,11 @@ It reads Markdown hierarchy, matches available `PAGE_TEMP` templates, clones fra
 ## Example Outline
 
 ```md
-《产品演示》
+<Title>
 # TOC
-## 第一章
-### 关键问题
-##### 现状洞察
+## Chapter 1
+### Key issue
+##### Current state
 ```
 
 ## Template Names
@@ -80,6 +80,10 @@ npm test
 npm run typecheck
 npm run lint
 ```
+
+## 中文
+
+完整中文说明见 [README.zh-CN.md](README.zh-CN.md)。
 
 ## License
 
