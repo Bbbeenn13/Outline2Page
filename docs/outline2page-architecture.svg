@@ -1,6 +1,6 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
-  <title id="title">Outline2Page 杩愯鏋舵瀯鍥?</title>
-  <desc id="desc">灞曠ず Outline2Page 浠?Markdown 澶х翰鍒?Figma 椤甸潰鐢熸垚銆佸睘鎬ф敞鍏ャ€乀OC 灞曞紑鍜岀敓鎴愭姤鍛婄殑瀹屾暣娴佺▼銆?</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Outline2Page 运行架构图</title>
+  <desc id="desc">展示 Outline2Page 从 Markdown 大纲到 Figma 页面生成、属性注入、目录展开和生成报告的完整流程。</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#fbfcfe" />
@@ -18,33 +18,27 @@
       <stop offset="0%" stop-color="#059669" />
       <stop offset="100%" stop-color="#10b981" />
     </linearGradient>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
     </marker>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
       <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.08" />
     </filter>
     <style>
-      .bg { fill: url(#bg); }
-      .title { font: 700 42px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; letter-spacing: 0; }
+      .title { font: 700 42px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
       .subtitle { font: 400 18px/1.5 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; }
-      .section-title { font: 700 22px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
-      .section-note { font: 400 14px/1.4 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #64748b; }
+      .section-title { font: 700 22px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; }
+      .section-note { font: 400 14px/1.4 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #e2e8f0; }
       .card-title { font: 700 20px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #0f172a; }
       .card-body { font: 400 15px/1.45 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
       .card-code { font: 600 14px/1.4 "JetBrains Mono", "SFMono-Regular", Consolas, monospace; fill: #0f172a; }
-      .chip { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1.2; }
-      .chip-text { font: 600 13px/1.3 "JetBrains Mono", "SFMono-Regular", Consolas, monospace; fill: #0f172a; }
       .panel { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1.5; rx: 28; filter: url(#shadow); }
-      .panel-soft-blue { fill: #f8fbff; }
-      .panel-soft-slate { fill: #fbfcfe; }
-      .panel-soft-green { fill: #f7fdfa; }
+      .chip { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1.2; }
       .pill { fill: #ffffff; stroke: #dbe4f0; stroke-width: 1; rx: 18; }
       .pill-label { font: 700 13px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #334155; }
       .pill-value { font: 600 14px/1.2 "JetBrains Mono", "SFMono-Regular", Consolas, monospace; fill: #0f172a; }
       .arrow { stroke: #94a3b8; stroke-width: 3.2; fill: none; marker-end: url(#arrow); }
       .arrow-dashed { stroke: #94a3b8; stroke-width: 2.8; fill: none; marker-end: url(#arrow); stroke-dasharray: 9 8; }
-      .muted-line { stroke: #e2e8f0; stroke-width: 1.2; }
       .tag { font: 700 12px/1 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #ffffff; letter-spacing: 0.04em; }
       .badge { fill: #0f172a; rx: 14; }
       .mini { font: 700 13px/1.2 "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; fill: #475569; }
@@ -53,177 +47,161 @@
 
   <rect class="bg" x="0" y="0" width="1800" height="1120" />
 
-  <text class="title" x="80" y="88">Outline2Page 杩愯鏋舵瀯鍥?</text>
-  <text class="subtitle" x="80" y="122">Markdown 澶х翰 鈫?缁撴瀯瑙ｆ瀽 鈫?妯℃澘鍖归厤 鈫?Figma 椤甸潰鐢熸垚 鈫?鎶ュ憡涓庤鐩?</text>
-  <rect x="1540" y="52" width="180" height="34" class="badge" />
-  <text class="tag" x="1582" y="75">README 鍙嬪ソ鐗?</text>
+  <text class="title" x="80" y="88">Outline2Page 运行架构图</text>
+  <text class="subtitle" x="80" y="122">Markdown 大纲 → 结构解析 → 模板匹配 → Figma 页面生成 → 报告与覆盖</text>
+  <rect x="1528" y="52" width="192" height="34" class="badge" />
+  <text class="tag" x="1566" y="75">README 可直接使用</text>
 
-  <!-- Left panel -->
   <g transform="translate(80 160)">
     <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
     <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#blueHeader)" />
-    <rect x="0" y="40" width="480" height="28" fill="url(#blueHeader)" />
-    <text class="section-title" x="28" y="41" fill="#ffffff">杈撳叆涓庨瑙?</text>
-    <text class="section-note" x="28" y="60" fill="#e0f2fe">src/ui/ui-controller.ts</text>
+    <text class="section-title" x="28" y="42">输入与预览</text>
+    <text class="section-note" x="28" y="60">src/ui/ui-controller.ts</text>
 
     <rect x="28" y="100" width="424" height="112" rx="20" class="chip" fill="#eff6ff" />
-    <text class="card-title" x="50" y="137">Markdown 澶х翰</text>
-    <text class="card-body" x="50" y="165">鐩存帴绮樿创绔犺妭缁撴瀯锛屽疄鏃惰Е鍙戣В鏋?</text>
+    <text class="card-title" x="50" y="137">Markdown 大纲</text>
+    <text class="card-body" x="50" y="165">直接粘贴章节结构，实时触发解析</text>
     <text class="card-code" x="50" y="192">Vision / TOC / CHAPTER / TITLE / STEP</text>
 
-    <path class="arrow" d="M 240 224 L 240 260" />
+    <path class="arrow" d="M 240 224 L 240 258" />
 
-    <rect x="28" y="260" width="424" height="160" rx="20" class="chip" fill="#ffffff" />
-    <text class="card-title" x="50" y="296">UI 棰勮灞?</text>
-    <text class="card-body" x="50" y="324">缁撴瀯鏍戙€佺粺璁°€佹ā鏉块€夋嫨銆佸睘鎬ф槧灏勩€佽鍛娿€佹姤鍛?</text>
+    <rect x="28" y="258" width="424" height="162" rx="20" class="chip" fill="#ffffff" />
+    <text class="card-title" x="50" y="294">UI 预览层</text>
+    <text class="card-body" x="50" y="322">结构树、统计、模板选择、属性映射、警告、报告</text>
     <g transform="translate(50 344)">
       <rect x="0" y="0" width="112" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="18" y="20">瑙ｆ瀽棰勮</text>
+      <text class="pill-value" x="18" y="20">解析预览</text>
       <rect x="124" y="0" width="108" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="147" y="20">妯℃澘閫夐」</text>
+      <text class="pill-value" x="147" y="20">模板选项</text>
       <rect x="244" y="0" width="130" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="266" y="20">灞炴€ф槧灏?</text>
+      <text class="pill-value" x="266" y="20">属性映射</text>
       <rect x="0" y="42" width="108" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="23" y="62">鐢熸垚鎶ュ憡</text>
+      <text class="pill-value" x="23" y="62">生成报告</text>
       <rect x="120" y="42" width="92" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="145" y="62">璀﹀憡</text>
+      <text class="pill-value" x="145" y="62">警告</text>
       <rect x="224" y="42" width="96" height="30" rx="15" class="pill" />
-      <text class="pill-value" x="244" y="62">鏍戠姸鍥?</text>
+      <text class="pill-value" x="244" y="62">树状图</text>
     </g>
 
-    <path class="arrow-dashed" d="M 240 444 L 240 480" />
+    <path class="arrow-dashed" d="M 240 440 L 240 476" />
 
-    <rect x="28" y="480" width="424" height="190" rx="20" class="chip" fill="#f8fbff" />
-    <text class="card-title" x="50" y="516">Figma 鎵弿杈撳叆</text>
-    <text class="card-body" x="50" y="544">浠庡綋鍓嶆枃浠惰鍙栧彲鐢ㄦā鏉夸笌缁勪欢灞炴€?</text>
-
-    <g transform="translate(50 566)">
+    <rect x="28" y="476" width="424" height="194" rx="20" class="chip" fill="#f8fbff" />
+    <text class="card-title" x="50" y="512">Figma 扫描输入</text>
+    <text class="card-body" x="50" y="540">从当前文件读取可用模板与组件属性</text>
+    <g transform="translate(50 562)">
       <rect x="0" y="0" width="168" height="32" rx="16" class="pill" />
       <text class="pill-value" x="18" y="21">scanTemplates()</text>
       <rect x="182" y="0" width="210" height="32" rx="16" class="pill" />
       <text class="pill-value" x="200" y="21">scanFileComponentProperties()</text>
       <rect x="0" y="46" width="178" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="18" y="67">PAGE_TEMP* 妯℃澘</text>
+      <text class="pill-value" x="18" y="67">PAGE_TEMP* 模板</text>
       <rect x="194" y="46" width="198" height="32" rx="16" class="pill" />
-      <text class="pill-value" x="212" y="67">TOC / PAGE 灞炴€у悕</text>
+      <text class="pill-value" x="212" y="67">TOC / PAGE 属性名</text>
     </g>
 
-    <text class="mini" x="50" y="650">杈撳叆浼氶┍鍔ㄩ瑙堜笌鍚庣画妯℃澘閫夋嫨</text>
+    <text class="mini" x="50" y="660">输入会驱动预览与后续模板选择</text>
   </g>
 
-  <!-- Middle panel -->
   <g transform="translate(660 160)">
     <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
     <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#slateHeader)" />
-    <rect x="0" y="40" width="480" height="28" fill="url(#slateHeader)" />
-    <text class="section-title" x="28" y="41" fill="#ffffff">鏍稿績瑙勫垝</text>
-    <text class="section-note" x="28" y="60" fill="#cbd5e1">src/core/*</text>
+    <text class="section-title" x="28" y="42">核心规划</text>
+    <text class="section-note" x="28" y="60">src/core/*</text>
 
-    <rect x="28" y="102" width="424" height="120" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="140">1. 瑙ｆ瀽涓庡垎鏋?</text>
-    <text class="card-body" x="50" y="168">parseOutline() + analyzeOutline()</text>
-    <text class="card-body" x="50" y="194">鎶?Markdown 杞垚缁撴瀯鍖栨枃妗ｄ笌椤甸潰瑙勬ā</text>
+    <rect x="28" y="100" width="424" height="120" rx="20" class="chip" fill="#f8fafc" />
+    <text class="card-title" x="50" y="138">1. 解析与分析</text>
+    <text class="card-body" x="50" y="166">parseOutline() + analyzeOutline()</text>
+    <text class="card-body" x="50" y="192">把 Markdown 转成结构化文档与页面规模</text>
 
-    <path class="arrow" d="M 240 228 L 240 252" />
+    <path class="arrow" d="M 240 224 L 240 248" />
 
-    <rect x="28" y="252" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="290">2. 妯℃澘鍖归厤</text>
-    <text class="card-body" x="50" y="318">mapTemplates() 鏍规嵁椤甸潰绫诲瀷鍒嗛厤妯℃澘</text>
-    <text class="card-body" x="50" y="344">杈撳嚭 COVER / TOC / CHAPTER / TITLE / STEP</text>
+    <rect x="28" y="248" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
+    <text class="card-title" x="50" y="286">2. 模板匹配</text>
+    <text class="card-body" x="50" y="314">mapTemplates() 根据页面类型分配模板</text>
+    <text class="card-body" x="50" y="340">输出 COVER / TOC / CHAPTER / TITLE / STEP</text>
 
-    <path class="arrow" d="M 240 378 L 240 402" />
+    <path class="arrow" d="M 240 374 L 240 398" />
 
-    <rect x="28" y="402" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="440">3. 椤甸潰瑙勫垝</text>
-    <text class="card-body" x="50" y="468">createPagePlan() + applyPagination()</text>
-    <text class="card-body" x="50" y="494">鎶婄珷鑺傘€佹爣棰樸€佸皬鑺傛帓鎴愬彲鐢熸垚椤甸潰搴忓垪</text>
+    <rect x="28" y="398" width="424" height="124" rx="20" class="chip" fill="#f8fafc" />
+    <text class="card-title" x="50" y="436">3. 页面规划</text>
+    <text class="card-body" x="50" y="464">createPagePlan() + applyPagination()</text>
+    <text class="card-body" x="50" y="490">把章节、标题、小节排成可生成页面序列</text>
 
-    <path class="arrow" d="M 240 528 L 240 552" />
+    <path class="arrow" d="M 240 524 L 240 548" />
 
-    <rect x="28" y="552" width="424" height="118" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="590">4. 甯冨眬璁＄畻</text>
-    <text class="card-body" x="50" y="618">calculateLayout() 璁＄畻妯悜 / 绾靛悜闂磋窛</text>
-    <text class="card-body" x="50" y="644">纭繚杩炵画鐢熸垚鏃朵笉閲嶅彔</text>
+    <rect x="28" y="548" width="424" height="118" rx="20" class="chip" fill="#f8fafc" />
+    <text class="card-title" x="50" y="586">4. 布局计算</text>
+    <text class="card-body" x="50" y="614">calculateLayout() 计算横向 / 纵向间距</text>
+    <text class="card-body" x="50" y="640">确保连续生成时不重叠</text>
 
-    <path class="arrow" d="M 240 670 L 240 694" />
+    <path class="arrow" d="M 240 668 L 240 692" />
 
-    <rect x="28" y="694" width="424" height="52" rx="20" class="chip" fill="#f8fafc" />
-    <text class="card-title" x="50" y="726">5. 鎶ュ憡姹囨€?</text>
-    <text class="card-body" x="200" y="726">buildGenerationReport()</text>
+    <rect x="28" y="692" width="424" height="52" rx="20" class="chip" fill="#f8fafc" />
+    <text class="card-title" x="50" y="724">5. 报告汇总</text>
+    <text class="card-body" x="200" y="724">buildGenerationReport()</text>
   </g>
 
-  <!-- Right panel -->
   <g transform="translate(1240 160)">
     <rect class="panel" x="0" y="0" width="480" height="760" rx="28" />
     <rect x="0" y="0" width="480" height="68" rx="28" fill="url(#greenHeader)" />
-    <rect x="0" y="40" width="480" height="28" fill="url(#greenHeader)" />
-    <text class="section-title" x="28" y="41" fill="#ffffff">Figma 鐢熸垚涓庤鐩?</text>
-    <text class="section-note" x="28" y="60" fill="#dcfce7">src/figma/*</text>
+    <text class="section-title" x="28" y="42">Figma 生成与覆盖</text>
+    <text class="section-note" x="28" y="60">src/figma/*</text>
 
-    <rect x="28" y="102" width="424" height="108" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="138">鍑嗗鐢熸垚鍖?</text>
-    <text class="card-body" x="50" y="166">prepareGeneratedSection() 鍏堟竻鐞嗕笂涓€娆＄粨鏋?</text>
-    <text class="card-body" x="50" y="192">鐢熸垚涓撳睘 Section 骞跺畾浣嶅埌褰撳墠椤甸潰</text>
+    <rect x="28" y="100" width="424" height="108" rx="20" class="chip" fill="#f7fdfa" />
+    <text class="card-title" x="50" y="136">准备生成区</text>
+    <text class="card-body" x="50" y="164">prepareGeneratedSection() 先清理上一次结果</text>
+    <text class="card-body" x="50" y="190">生成专属 Section 并定位到当前页面</text>
 
-    <path class="arrow" d="M 240 218 L 240 242" />
+    <path class="arrow" d="M 240 216 L 240 240" />
 
-    <rect x="28" y="242" width="424" height="136" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="278">鑺傜偣鐢熸垚</text>
-    <text class="card-body" x="50" y="306">createNodeFromTemplate() 浠庢ā鏉垮鍒?Frame</text>
-    <text class="card-body" x="50" y="332">涓烘瘡涓〉闈㈢被鍨嬪垱寤哄搴旈〉闈?</text>
-    <text class="card-code" x="50" y="360">COVER / TOC / CHAPTER / TITLE / STEP</text>
+    <rect x="28" y="240" width="424" height="136" rx="20" class="chip" fill="#f7fdfa" />
+    <text class="card-title" x="50" y="276">节点生成</text>
+    <text class="card-body" x="50" y="304">createNodeFromTemplate() 从模板复制 Frame</text>
+    <text class="card-body" x="50" y="330">为每个页面类型创建对应页面</text>
+    <text class="card-code" x="50" y="358">COVER / TOC / CHAPTER / TITLE / STEP</text>
 
-    <path class="arrow" d="M 240 384 L 240 408" />
+    <path class="arrow" d="M 240 382 L 240 406" />
 
-    <rect x="28" y="408" width="424" height="140" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="444">鍐呭娉ㄥ叆</text>
-    <text class="card-body" x="50" y="472">injectProperties() 鍐欏叆鏍囬銆侀〉鐮併€乀OC 淇℃伅</text>
-    <text class="card-body" x="50" y="498">injectNavigation() 鍚屾楂樹寒涓庡鑸姸鎬?</text>
-    <text class="card-body" x="50" y="524">expandAndInjectToc() 灞曞紑鐩綍琛?</text>
+    <rect x="28" y="406" width="424" height="140" rx="20" class="chip" fill="#f7fdfa" />
+    <text class="card-title" x="50" y="442">内容注入</text>
+    <text class="card-body" x="50" y="470">injectProperties() 写入标题、页码、TOC 信息</text>
+    <text class="card-body" x="50" y="496">injectNavigation() 同步高亮与导航状态</text>
+    <text class="card-body" x="50" y="522">expandAndInjectToc() 展开目录行</text>
 
-    <path class="arrow" d="M 240 548 L 240 572" />
+    <path class="arrow" d="M 240 546 L 240 570" />
 
-    <rect x="28" y="572" width="424" height="110" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="608">鏀跺彛涓庡榻?</text>
-    <text class="card-body" x="50" y="636">fitSectionToNodes() 鑷姩鍖呬綇鐢熸垚鍐呭</text>
-    <text class="card-body" x="50" y="660">selectGeneratedSection() 閫変腑缁撴灉鍖?</text>
+    <rect x="28" y="570" width="424" height="110" rx="20" class="chip" fill="#f7fdfa" />
+    <text class="card-title" x="50" y="606">收口与对齐</text>
+    <text class="card-body" x="50" y="634">fitSectionToNodes() 自动包住生成内容</text>
+    <text class="card-body" x="50" y="658">selectGeneratedSection() 选中结果区</text>
 
-    <path class="arrow" d="M 240 682 L 240 706" />
+    <path class="arrow" d="M 240 680 L 240 704" />
 
-    <rect x="28" y="706" width="424" height="52" rx="20" class="chip" fill="#f7fdfa" />
-    <text class="card-title" x="50" y="738">杈撳嚭锛氭柊 Frame + 鎶ュ憡 + 璀﹀憡</text>
+    <rect x="28" y="704" width="424" height="52" rx="20" class="chip" fill="#f7fdfa" />
+    <text class="card-title" x="50" y="736">输出：新 Frame + 报告 + 警告</text>
   </g>
 
-  <!-- Cross-panel arrows -->
   <path class="arrow-dashed" d="M 560 540 C 620 540, 620 540, 660 540" />
-  <text class="section-note" x="585" y="522">妯℃澘 / 灞炴€ц緭鍏ュ埌瑙勫垝灞?</text>
-
+  <text class="section-note" x="585" y="522" fill="#64748b">模板 / 属性输入到规划层</text>
   <path class="arrow-dashed" d="M 1140 520 C 1180 520, 1200 520, 1240 520" />
-  <text class="section-note" x="1148" y="502">瑙勫垝缁撴灉杩涘叆 Figma 鍐欏叆</text>
+  <text class="section-note" x="1148" y="502" fill="#64748b">规划结果进入 Figma 写入</text>
 
-  <path class="arrow-dashed" d="M 900 920 C 900 980, 900 980, 900 1008" />
-  <path class="arrow-dashed" d="M 1540 920 C 1540 980, 1540 980, 1540 1008" />
-
-  <!-- Bottom output band -->
   <g transform="translate(80 920)">
     <rect x="0" y="0" width="1640" height="140" rx="28" fill="#ffffff" stroke="#dbe4f0" stroke-width="1.5" filter="url(#shadow)" />
-    <text class="section-title" x="30" y="42">鐢熸垚缁撴灉</text>
-    <text class="section-note" x="30" y="68">涓€娆＄敓鎴愬悗浼氳鐩栦笂涓€娆?Outline2Page 鐢熸垚鐨?Section锛屽苟鍥炲啓缁熻涓庤鍛?</text>
+    <text class="card-title" x="30" y="42">生成结果</text>
+    <text class="card-body" x="30" y="68">一次生成后会覆盖上一次 Outline2Page 生成的 Section，并回写统计与警告</text>
 
     <g transform="translate(30 84)">
       <rect x="0" y="0" width="228" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="20" y="24">瑕嗙洊鏃х粨鏋?</text>
+      <text class="pill-label" x="20" y="24">覆盖旧结果</text>
       <rect x="246" y="0" width="188" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="266" y="24">鐢熸垚 Section</text>
+      <text class="pill-label" x="266" y="24">生成 Section</text>
       <rect x="454" y="0" width="188" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="474" y="24">TOC 灞曞紑</text>
+      <text class="pill-label" x="474" y="24">TOC 展开</text>
       <rect x="662" y="0" width="220" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="682" y="24">鎶ュ憡 / 璀﹀憡 / 閫変腑缁撴灉</text>
+      <text class="pill-label" x="682" y="24">报告 / 警告 / 选中结果</text>
       <rect x="902" y="0" width="190" height="40" rx="20" class="pill" />
-      <text class="pill-label" x="922" y="24">鍥炲埌 UI 棰勮</text>
+      <text class="pill-label" x="922" y="24">回到 UI 预览</text>
     </g>
   </g>
 </svg>
-
-
-
