@@ -1,32 +1,75 @@
+<div align="center">
+
 # Outline2Page
 
-Figma plugin for turning structured Markdown outlines into reusable, coverable, and reportable page frames.
+Turn structured Markdown outlines into reusable Figma pages.
+
+[中文](README.zh-CN.md) · [English](README.en.md)
 
 ![Project overview](docs/outline2page-architecture.svg)
 
-## Languages
+</div>
 
-- [中文说明](README.zh-CN.md)
-- [English](README.en.md)
+## What It Is
 
-## What it does
+Outline2Page is a Figma plugin for designers who want to turn content outlines into page structures without touching plugin code.
 
-- Parses Markdown outlines into `COVER / TOC / CHAPTER / TITLE / STEP` page structure.
-- Scans `PAGE_TEMP:` or `PAGE_TEMP：` templates from the active Figma page.
-- Maps required page kinds to available templates.
-- Clones template frames, injects content, and applies page naming and layout.
-- Writes chapter, title, step, page number, TOC, show, highlight, and type properties.
-- Expands TOC rows when template capacity is not enough.
-- Overwrites the previous generated Section on each run.
-- Returns parse warnings, generation warnings, and a final report in the UI.
+It reads Markdown hierarchy, matches available `PAGE_TEMP` templates, clones frames, injects content, applies navigation states, and reports the result back in the plugin UI.
 
-## Quick start
+## Highlights
 
-1. Prepare a Markdown outline.
-2. Create template frames in Figma with `PAGE_TEMP` names.
-3. Open the plugin and paste the outline.
-4. Review the parsed structure and template mapping.
-5. Click generate.
+- Markdown-driven generation for `COVER / TOC / CHAPTER / TITLE / STEP`.
+- Template scanning from the current Figma page.
+- Property mapping for chapter, title, step, page number, TOC, show, highlight, and type.
+- TOC row expansion when template capacity is insufficient.
+- Automatic overwrite of the previous generated Section.
+- Testable core logic split from Figma-specific adapters.
+
+## Workflow
+
+1. Paste a Markdown outline.
+2. Scan the current page for `PAGE_TEMP` templates.
+3. Review parsed structure and warnings.
+4. Map templates and component properties.
+5. Generate the pages.
+6. Review the output Section and report.
+
+## Example Outline
+
+```md
+《产品演示》
+# TOC
+## 第一章
+### 关键问题
+##### 现状洞察
+```
+
+## Template Names
+
+```text
+PAGE_TEMP:COVER
+PAGE_TEMP:TOC
+PAGE_TEMP:CHAPTER
+PAGE_TEMP:TITLE
+PAGE_TEMP:STEP
+```
+
+Chinese colon is supported too:
+
+```text
+PAGE_TEMP：COVER
+```
+
+## Repository Layout
+
+```text
+src/
+  core/       parsing, planning, layout, naming, reporting
+  figma/      Figma API adapters
+  ui.html     plugin UI
+tests/        unit, integration, and adapter tests
+docs/         overview diagram
+```
 
 ## Development
 
@@ -37,14 +80,6 @@ npm test
 npm run typecheck
 npm run lint
 ```
-
-## Repository map
-
-- `src/core/` core parsing, planning, layout, naming, reporting
-- `src/figma/` Figma API adapters
-- `src/ui.html` plugin UI
-- `tests/` core, Figma, and integration tests
-- `docs/outline2page-architecture.svg` repo overview diagram
 
 ## License
 
